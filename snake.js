@@ -110,19 +110,21 @@ function SnakeGame(jQ){
         // Does not care about borders, candy or walls. Just shifting position.
         var movePoint = function(oldPoint, direction){
         	var newPoint;
-        	switch (direction) {
-        	case game.gameModel.constants.DIRECTION_LEFT:
-        		newPoint = new Point(oldPoint.left-1, oldPoint.top);
-        		break;
-        	case game.gameModel.constants.DIRECTION_UP:
-        		newPoint = new Point(oldPoint.left, oldPoint.top-1);
-        		break;
-        	case game.gameModel.constants.DIRECTION_RIGHT:
-        		newPoint = new Point(oldPoint.left+1, oldPoint.top);
-        		break;
-        	case game.gameModel.constants.DIRECTION_DOWN:
-        		newPoint = new Point(oldPoint.left, oldPoint.top+1);
-        		break;
+        	with (game.gameModel.constants) {
+	        	switch (direction) {
+	        	case DIRECTION_LEFT:
+	        		newPoint = new Point(oldPoint.left-1, oldPoint.top);
+	        		break;
+	        	case DIRECTION_UP:
+	        		newPoint = new Point(oldPoint.left, oldPoint.top-1);
+	        		break;
+	        	case DIRECTION_RIGHT:
+	        		newPoint = new Point(oldPoint.left+1, oldPoint.top);
+	        		break;
+	        	case DIRECTION_DOWN:
+	        		newPoint = new Point(oldPoint.left, oldPoint.top+1);
+	        		break;
+	        	}
         	}
         	return newPoint;
         };
@@ -185,29 +187,34 @@ function SnakeGame(jQ){
     function InputInterface(initialDirection){
     	// reservedKeys are the keys which should be handled by the game
     	// and not do other stuff, like scrolling up and down.
-    	var reservedKeys = [37, 38, 39, 40];
+    	var arrowKeys = [37, 38, 39, 40];
     	this.lastDirection = initialDirection;
     	this.startListening = function(){
     		$(window).keydown(handleKeyPress);
     	};
     	var handleKeyPress = function(event){
-    		// If the key pushed is a reserved key
-			if (reservedKeys.indexOf(event.keyCode) >= 0) {
-    			switch (event.keyCode) {
-    				case 37:
-    					game.inputInterface.lastDirection = game.gameModel.constants.DIRECTION_LEFT;
-    					break;
-    				case 38:
-    					game.inputInterface.lastDirection = game.gameModel.constants.DIRECTION_UP;
-    					break;
-    				case 39:
-    					game.inputInterface.lastDirection = game.gameModel.constants.DIRECTION_RIGHT;
-    					break;
-    				case 40:
-    					game.inputInterface.lastDirection = game.gameModel.constants.DIRECTION_DOWN;
-    					break;
+    		// If the key pushed is an arrow key
+			if (arrowKeys.indexOf(event.keyCode) >= 0) {
+				handleArrowKeyPress(event.keyCode);
+				return false;
+			}
+    	};
+    	var handleArrowKeyPress = function(keyCode){
+    		with (game.gameModel.constants) {
+    			switch (keyCode) {
+				case 37:
+					game.inputInterface.lastDirection = DIRECTION_LEFT;
+					break;
+				case 38:
+					game.inputInterface.lastDirection = DIRECTION_UP;
+					break;
+				case 39:
+					game.inputInterface.lastDirection = DIRECTION_RIGHT;
+					break;
+				case 40:
+					game.inputInterface.lastDirection = DIRECTION_DOWN;
+					break;
     			}
-    			return false;
 			}
     	};
     }
@@ -334,9 +341,9 @@ function SnakeGame(jQ){
 // like pointsize, canvaswidth and height and the DOM element
 // for the game itself.
 
-
+var game;
 $(document).ready(function(){
-    var game = new SnakeGame();
+    game = new SnakeGame();
     
     // @todo maybe game.play() ?
     game.gameModel.initGame();
