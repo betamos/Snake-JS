@@ -25,7 +25,7 @@ function SnakeGame(jQ){
     this.inputInterface = new InputInterface(this.gameModel.constants.DIRECTION_RIGHT);
     
     this.config = {
-    	// Changing point size doesn't change the CSS for the square. So maybe it
+    	// @todo Changing point size doesn't change the CSS for the square. So maybe it
     	// shouldn't be in config, or it should change
 		CANVAS_POINT_SIZE : 15,
 		CANVAS_WIDTH : 40,
@@ -237,7 +237,6 @@ function SnakeGame(jQ){
         this.$DOMCanvas = null;
         this.renderSnake = function(points){
         	
-        	// @todo check that it's not outside canvas
         	var $DOMSnake = $("<div />").addClass("snake");
         	
         	for (i in points) {
