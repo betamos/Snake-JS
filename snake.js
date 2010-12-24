@@ -29,11 +29,18 @@ function SnakeGame(jQ){
 		JQUERY_DOM_ELEMENT : $("#canvas")
     };
 
+    this.constants = {
+        DIRECTION_UP : 1,
+        DIRECTION_RIGHT : 2,
+        DIRECTION_DOWN : -1,
+        DIRECTION_LEFT : -2
+    };
+
     this.gameModel = new GameModel();
     this.snake = new Snake();
     this.canvas = new Canvas(this.config.CANVAS_WIDTH, this.config.CANVAS_HEIGHT);
     this.view = new DOMView(this.config.JQUERY_DOM_ELEMENT);
-    this.inputInterface = new InputInterface(this.gameModel.constants.DIRECTION_RIGHT);
+    this.inputInterface = new InputInterface(this.constants.DIRECTION_RIGHT);
 
     /**
      * GAME MODEL OBJECT
@@ -41,12 +48,6 @@ function SnakeGame(jQ){
      * This object is doing the game logic, frame management etc.
      */
     function GameModel() {
-        this.constants = {
-            DIRECTION_UP : 1,
-            DIRECTION_RIGHT : 2,
-            DIRECTION_DOWN : -1,
-            DIRECTION_LEFT : -2
-        };
         var mainIntervalId;
         
         this.initGame = function(){
@@ -124,7 +125,7 @@ function SnakeGame(jQ){
         // Does not care about borders, candy or walls. Just shifting position.
         var movePoint = function(oldPoint, direction){
         	var newPoint;
-        	with (game.gameModel.constants) {
+        	with (game.constants) {
 	        	switch (direction) {
 	        	case DIRECTION_LEFT:
 	        		newPoint = new Point(oldPoint.left-1, oldPoint.top);
@@ -148,7 +149,6 @@ function SnakeGame(jQ){
         var shiftPointIntoCanvas = function(point, canvas){
         	point.left = shiftIntoRange(point.left, canvas.width);
         	point.top = shiftIntoRange(point.top, canvas.height);
-        	log(canvas.width);
         	return point;
         };
         
@@ -215,7 +215,7 @@ function SnakeGame(jQ){
 			}
     	};
     	var handleArrowKeyPress = function(keyCode){
-    		with (game.gameModel.constants) {
+    		with (game.constants) {
     			switch (keyCode) {
 				case 37:
 					game.inputInterface.lastDirection = DIRECTION_LEFT;
@@ -266,7 +266,6 @@ function SnakeGame(jQ){
         };
 
         this.renderPoints = function(points, name){
-        	log(points);
         	
         	var $pointsParent = $("<div />").addClass(name);
         	
@@ -297,7 +296,7 @@ function SnakeGame(jQ){
      * The snake itself...
      */
     function Snake() {
-        this.direction = game.gameModel.constants.DIRECTION_RIGHT;
+        this.direction = game.constants.DIRECTION_RIGHT;
         this.snakeBody = [];
         
         // Check if any of this objects points collides with an external point
