@@ -56,7 +56,7 @@ function SnakeGame(jQ){
             // Create snake body and assign it to the snake
             var snakeBody = [new Point(7, 4), new Point(6, 4), new Point(5, 4),
                              new Point(4, 4), new Point(3, 4)];
-            game.snake.snakeBody = snakeBody;
+            game.snake.points = snakeBody;
             
             game.view.initPlayField();
             
@@ -69,7 +69,7 @@ function SnakeGame(jQ){
         };
         
         this.nextFrame = function(){
-        	var head = game.snake.snakeBody[0];
+        	var head = game.snake.points[0];
         	
         	// The direction the snake will move in this frame
         	var direction = actualSnakeDirection(game.snake.direction,
@@ -89,13 +89,13 @@ function SnakeGame(jQ){
         	
         	game.snake.direction = direction;
         	
-        	game.snake.snakeBody.unshift(newHead);
+        	game.snake.points.unshift(newHead);
         	// @todo pop() returns undefined if empty, check that it doesn't shrink too far
-        	game.snake.snakeBody.pop();
+        	game.snake.points.pop();
         	
         	// Render
         	game.view.clear();
-        	game.view.renderPoints(game.snake.snakeBody, "snake");
+        	game.view.renderPoints(game.snake.points, "snake");
         	
         	return true;
         };
@@ -297,13 +297,13 @@ function SnakeGame(jQ){
      */
     function Snake() {
         this.direction = game.constants.DIRECTION_RIGHT;
-        this.snakeBody = [];
+        this.points = [];
         
         // Check if any of this objects points collides with an external point
         // Returns true if any collision occurs, false otherwise
         this.collidesWith = function(point){
-        	for (i in this.snakeBody) {
-        		if (point.collidesWith(this.snakeBody[i]))
+        	for (i in this.points) {
+        		if (point.collidesWith(this.points[i]))
         			return true;
         	}
         	return false;
