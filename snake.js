@@ -18,20 +18,22 @@ function SnakeGame(jQ){
 	if (typeof jQ != "undefined") {
 		$ = jQ;
 	}
-
-    this.gameModel = new GameModel();
-    this.snake = new Snake();
-    this.canvas = new Canvas();
-    this.inputInterface = new InputInterface(this.gameModel.constants.DIRECTION_RIGHT);
-    
+	
     this.config = {
     	// @todo Changing point size doesn't change the CSS for the square. So maybe it
     	// shouldn't be in config, or it should change
 		CANVAS_POINT_SIZE : 15,
 		CANVAS_WIDTH : 40,
 		CANVAS_HEIGHT : 30,
-		FRAME_INTERVAL : 100
+		FRAME_INTERVAL : 100,
+		JQUERY_DOM_ELEMENT : $("#canvas")
     };
+
+    this.gameModel = new GameModel();
+    this.snake = new Snake();
+    this.canvas = new Canvas(this.config.CANVAS_WIDTH, this.config.CANVAS_HEIGHT);
+    this.view = new DOMView(this.config.JQUERY_DOM_ELEMENT);
+    this.inputInterface = new InputInterface(this.gameModel.constants.DIRECTION_RIGHT);
 
     /**
      * GAME MODEL OBJECT
@@ -55,10 +57,11 @@ function SnakeGame(jQ){
                              new Point(4, 4), new Point(3, 4)];
             game.snake.snakeBody = snakeBody;
             
-            game.canvas.initCanvas();
-            game.canvas.renderSnake(game.snake.snakeBody);
+            game.view.initPlayField();
             
             game.inputInterface.startListening();
+            
+            this.nextFrame();
             
             mainIntervalId = setInterval(this.nextFrame, game.config.FRAME_INTERVAL);
             
@@ -73,11 +76,12 @@ function SnakeGame(jQ){
 
         	var newHead = movePoint(head, direction);
         	
-        	if (!insideCanvas(newHead, game.config.CANVAS_WIDTH, game.config.CANVAS_HEIGHT))
-        		shiftPointIntoCanvas(newHead);
+        	if (!insideCanvas(newHead, game.canvas))
+        		shiftPointIntoCanvas(newHead, game.canvas);
 
         	if (game.snake.collidesWith(newHead)) {
         		game.gameModel.gameOver();
+        		return false;
         	}
         	// @todo also check if it enters itself, goes thru wall or catches candy?
         	// Separate to different local functions
@@ -89,8 +93,10 @@ function SnakeGame(jQ){
         	game.snake.snakeBody.pop();
         	
         	// Render
-        	game.canvas.clear();
-        	game.canvas.renderSnake(game.snake.snakeBody);
+        	game.view.clear();
+        	game.view.renderPoints(game.snake.snakeBody, "snake");
+        	
+        	return true;
         };
         
         this.gameOver = function(){
@@ -139,9 +145,10 @@ function SnakeGame(jQ){
         
         // Shifts the points position so that it it is kept within the canvas
         // making it possible to "go thru" walls
-        var shiftPointIntoCanvas = function(point){
-        	point.left = shiftIntoRange(point.left, game.config.CANVAS_WIDTH);
-        	point.top = shiftIntoRange(point.top, game.config.CANVAS_HEIGHT);
+        var shiftPointIntoCanvas = function(point, canvas){
+        	point.left = shiftIntoRange(point.left, canvas.width);
+        	point.top = shiftIntoRange(point.top, canvas.height);
+        	log(canvas.width);
         	return point;
         };
         
@@ -181,9 +188,9 @@ function SnakeGame(jQ){
         
         // Check if a specific point is inside the canvas
         // Returns true if inside, false otherwise
-        var insideCanvas = function(point, canvasWidth, canvasHeight){
+        var insideCanvas = function(point, canvas){
         	if (point.left < 0 || point.top < 0 ||
-        		point.left >= canvasWidth || point.top >= canvasHeight){
+        		point.left >= canvas.width || point.top >= canvas.height){
         		return false;
         	}
         	else {
@@ -230,42 +237,57 @@ function SnakeGame(jQ){
     /**
      * CANVAS OBJECT
      *
+     * This object holds canvas properties and pointers to the objects which are in the
+     * canvas.
+     */
+    function Canvas(width, height) {
+        this.width = width;
+        this.height = height;
+        
+        // All objects within the canvas are in this array, like the snakebody, candy collection
+        this.contents = [];
+    }
+    
+    /**
+     * DOMVIEW OBJECT
+     *
      * This object is responsible for rendering the view to screen.
      */
-    function Canvas() {
-        this.points = [];
-        this.$DOMCanvas = null;
-        this.renderSnake = function(points){
-        	
-        	var $DOMSnake = $("<div />").addClass("snake");
-        	
-        	for (i in points) {
-        		
-        		var $DOMPoint = $("<div />").addClass("point");
-        		
-        		$DOMPoint.css({
-        			left : (points[i].left * game.config.CANVAS_POINT_SIZE) + "px",
-        			top : (points[i].top * game.config.CANVAS_POINT_SIZE) + "px"
-        		});
-        		
-        		$DOMSnake.append($DOMPoint);
-        		
-        	}
-        	
-        	this.$DOMCanvas.append($DOMSnake);
-        };
-        
-        this.initCanvas = function(){
-        	this.$DOMCanvas.css({
+    function DOMView($DOMElement) {
+    	this.$playField = $DOMElement;
+
+    	this.initPlayField = function(){
+        	this.$playField.css({
         		position : "relative",
         		width : (game.config.CANVAS_WIDTH * game.config.CANVAS_POINT_SIZE) + "px",
         		height : (game.config.CANVAS_HEIGHT * game.config.CANVAS_POINT_SIZE) + "px",
         		backgroundColor : "#000"
         	});
         };
-        
+
+        this.renderPoints = function(points, name){
+        	log(points);
+        	
+        	var $pointsParent = $("<div />").addClass(name);
+        	
+        	for (i in points) {
+        		
+        		var $point = $("<div />").addClass("point");
+        		
+        		$point.css({
+        			left : (points[i].left * game.config.CANVAS_POINT_SIZE) + "px",
+        			top : (points[i].top * game.config.CANVAS_POINT_SIZE) + "px"
+        		});
+        		
+        		$pointsParent.append($point);
+        		
+        	}
+        	
+        	this.$playField.append($pointsParent);
+        };
+
         this.clear = function() {
-        	this.$DOMCanvas.empty();
+        	this.$playField.empty();
         };
     }
 
