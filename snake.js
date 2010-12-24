@@ -43,12 +43,14 @@ function SnakeGame(jQ){
             DIRECTION_DOWN : -1,
             DIRECTION_LEFT : -2
         };
+        var mainIntervalId;
         
         this.initGame = function(){
             game.canvas.$DOMCanvas = $("#canvas");
             
             // Create snake body and assign it to the snake
-            var snakeBody = [new Point(3, 4), new Point(3, 5), new Point(4, 5)];
+            var snakeBody = [new Point(7, 4), new Point(6, 4), new Point(5, 4),
+                             new Point(4, 4), new Point(3, 4)];
             game.snake.snakeBody = snakeBody;
             
             game.canvas.initCanvas();
@@ -56,29 +58,27 @@ function SnakeGame(jQ){
             
             game.inputInterface.startListening();
             
-            // @todo the timer should be in game config.
-            setInterval(this.nextFrame, game.config.FRAME_INTERVAL);
+            mainIntervalId = setInterval(this.nextFrame, game.config.FRAME_INTERVAL);
             
         };
         
         this.nextFrame = function(){
-        	var snake = game.snake;
         	var head = game.snake.getHeadPoint();
         	
         	// The direction the snake will move in this frame
         	var direction = actualSnakeDirection(game.snake.direction,
         			game.inputInterface.lastDirection);
-        	
-        	
+
         	var newHead = movePoint(head, direction);
         	
-        	if (!insideCanvas(newHead, game.config.CANVAS_WIDTH, game.config.CANVAS_HEIGHT)){
+        	if (!insideCanvas(newHead, game.config.CANVAS_WIDTH, game.config.CANVAS_HEIGHT))
         		shiftPointIntoCanvas(newHead);
-        	}
 
+        	if (game.snake.collidesWith(newHead)) {
+        		game.gameModel.gameOver();
+        	}
         	// @todo also check if it enters itself, goes thru wall or catches candy?
         	// Separate to different local functions
-        	
         	
         	game.snake.direction = direction;
         	
@@ -88,6 +88,11 @@ function SnakeGame(jQ){
         	// Render
         	game.canvas.clear();
         	game.canvas.renderSnake(game.snake.snakeBody);
+        };
+        
+        this.gameOver = function(){
+        	clearInterval(mainIntervalId);
+        	alert("GAME OVER");
         };
         
         // Get the direction which the snake will go this frame
@@ -266,6 +271,7 @@ function SnakeGame(jQ){
      * SNAKE OBJECT
      *
      * The snake itself...
+     * @todo This should be a subclass of PointCollection
      */
     function Snake() {
         this.direction = game.gameModel.constants.DIRECTION_RIGHT;
@@ -294,6 +300,16 @@ function SnakeGame(jQ){
                 return false;
             }
         };
+        
+        // Check if any of this objects points collides with an external point
+        // Returns true if any collision occurs, false otherwise
+        this.collidesWith = function(point){
+        	for (i in this.snakeBody) {
+        		if (point.collidesWith(this.snakeBody[i]))
+        			return true;
+        	}
+        	return false;
+        };
     }
 
     /**
@@ -307,7 +323,7 @@ function SnakeGame(jQ){
         this.top = top;
         
         // Check if this point collides with another
-        this.collides = function(otherPoint){
+        this.collidesWith = function(otherPoint){
         	if (otherPoint.left == this.left && otherPoint.top == this.top)
         		return true;
         	else
