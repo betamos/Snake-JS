@@ -25,6 +25,8 @@ function SnakeGame(jQ){
     this.inputInterface = new InputInterface(this.gameModel.constants.DIRECTION_RIGHT);
     
     this.config = {
+    	// Changing point size doesn't change the CSS for the square. So maybe it
+    	// shouldn't be in config, or it should change
 		CANVAS_POINT_SIZE : 15,
 		CANVAS_WIDTH : 40,
 		CANVAS_HEIGHT : 30,
@@ -63,7 +65,7 @@ function SnakeGame(jQ){
         };
         
         this.nextFrame = function(){
-        	var head = game.snake.getHeadPoint();
+        	var head = game.snake.snakeBody[0];
         	
         	// The direction the snake will move in this frame
         	var direction = actualSnakeDirection(game.snake.direction,
@@ -82,8 +84,9 @@ function SnakeGame(jQ){
         	
         	game.snake.direction = direction;
         	
-        	game.snake.addHeadPoint(newHead);
-        	game.snake.removeTailPoint();
+        	game.snake.snakeBody.unshift(newHead);
+        	// @todo pop() returns undefined if empty, check that it doesn't shrink too far
+        	game.snake.snakeBody.pop();
         	
         	// Render
         	game.canvas.clear();
@@ -271,35 +274,10 @@ function SnakeGame(jQ){
      * SNAKE OBJECT
      *
      * The snake itself...
-     * @todo This should be a subclass of PointCollection
      */
     function Snake() {
         this.direction = game.gameModel.constants.DIRECTION_RIGHT;
         this.snakeBody = [];
-        this.pointCount = 0;
-        
-        this.getHeadPoint = function(){
-        	return this.snakeBody[0];
-        };
-        
-        // Adds a point to the beginning of the snake's body (a head)
-        this.addHeadPoint = function(point){
-            this.snakeBody.unshift(point);
-            this.pointCount++;
-        };
-        
-        // Removes the last point in the snakes body
-        // Returns true if success, false otherwise
-        this.removeTailPoint = function(){
-            if (this.pointCount > 1) {
-                this.snakeBody.pop();
-                this.pointCount--;
-                return true;
-            }
-            else {
-                return false;
-            }
-        };
         
         // Check if any of this objects points collides with an external point
         // Returns true if any collision occurs, false otherwise
