@@ -34,6 +34,16 @@ function SnakeGame(element){
 	this.view = new DOMView(element);
 	this.inputInterface = new InputInterface(this.constants.DIRECTION_RIGHT);
 
+	this.nowPlaying = false;
+
+	this.play = function(){
+		this.gameModel.initGame();
+	};
+
+	this.stop = function(){
+		this.gameModel.stopGame();
+	};
+
 	/**
 	 * GAME MODEL OBJECT
 	 *
@@ -57,6 +67,8 @@ function SnakeGame(element){
 			game.inputInterface.startListening();
 
 			mainIntervalId = setInterval(this.nextFrame, game.config.FRAME_INTERVAL);
+
+			game.nowPlaying = true;
 
 		};
 
@@ -89,11 +101,19 @@ function SnakeGame(element){
 			snake.points.unshift(newHead);
 
 			snake.points.pop();
+			
+			return true;
 		};
 
 		this.gameOver = function(){
-			clearInterval(mainIntervalId);
+			this.stopGame();
 			alert("GAME OVER");
+		};
+
+		this.stopGame = function(){
+			clearInterval(mainIntervalId);
+			game.view.clear();
+			game.nowPlaying = false;
 		};
 
 		// Take a point (oldPoint), "move" it in any direction (direction) and
