@@ -27,7 +27,7 @@ function SnakeGame(element){
 			DIRECTION_RIGHT : 2,
 			DIRECTION_DOWN : -1,
 			DIRECTION_LEFT : -2,
-			CANVAS_POINT_SIZE : 15
+			CANVAS_POINT_SIZE : 16
 	};
 
 	this.gameModel = new GameModel();
