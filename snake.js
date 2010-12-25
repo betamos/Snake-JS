@@ -70,12 +70,12 @@ function SnakeGame(element){
 				                 new Point(11, 15), new Point(10, 15), new Point(9, 15)];
 
 			game.view.initPlayField();
-			game.inputInterface.startListening();
 		};
 
 		this.playGame = function(){
 			this.nextFrame();
 			mainIntervalId = setInterval(this.nextFrame, game.config.FRAME_INTERVAL);
+			game.inputInterface.startListening();
 			game.nowPlaying = true;
 		};
 
@@ -86,6 +86,7 @@ function SnakeGame(element){
 
 		this.quitGame = function(){
 			clearInterval(mainIntervalId);
+			game.inputInterface.stopListening();
 			game.view.clear();
 			game.nowPlaying = false;
 		};
@@ -196,14 +197,27 @@ function SnakeGame(element){
 		// reservedKeys are the keys which should be handled by the game
 		// and not do other stuff, like scrolling up and down.
 		var arrowKeys = [37, 38, 39, 40];
+		var listening = false;
 		this.lastDirection = initialDirection;
 		this.startListening = function(){
-			$(window).keydown(handleKeyPress);
+			if (!listening) {
+				window.addEventListener('keydown', handleKeyPress);
+				listening = true;
+			}
+		};
+		this.stopListening = function(){
+			if (listening) {
+				window.removeEventListener('keydown', handleKeyPress);
+				listening = false;
+			}
 		};
 		var handleKeyPress = function(event){
 			// If the key pushed is an arrow key
 			if (arrowKeys.indexOf(event.keyCode) >= 0) {
 				handleArrowKeyPress(event.keyCode);
+
+				// @todo Return false doesn't seem to prevent scrolling
+				// with arrow keys. See what can be done
 				return false;
 			}
 		};
