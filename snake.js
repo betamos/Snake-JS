@@ -9,7 +9,9 @@
  * Everything associated with the snake game should be encapsulated within
  * this namespace
  */
-// Constructor maybe should contain setup config like $DOMCanvas etc...
+// @todo the constructor should probably take some arguments
+// like pointsize, canvaswidth and height and the DOM element
+// for the game itself.
 function SnakeGame(jQ){
 	var game = this;
 	
@@ -346,23 +348,4 @@ function SnakeGame(jQ){
         		return undefined;
         }
     };
-    
 };
-
-
-
-// @todo the constructor should probably take some arguments
-// like pointsize, canvaswidth and height and the DOM element
-// for the game itself.
-
-var game;
-$(document).ready(function(){
-    game = new SnakeGame();
-    
-    // @todo maybe game.play() ?
-    game.gameModel.initGame();
-});
-
-function log(o) {
-  console.log(o);
-}
