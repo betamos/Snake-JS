@@ -38,10 +38,19 @@ function SnakeGame(element){
 
 	this.play = function(){
 		this.gameModel.initGame();
+		this.gameModel.playGame();
 	};
 
-	this.stop = function(){
-		this.gameModel.stopGame();
+	this.quit = function(){
+		this.gameModel.quitGame();
+	};
+
+	this.pause = function(){
+		this.gameModel.pauseGame();
+	};
+
+	this.unpause = function(){
+		this.gameModel.playGame();
 	};
 
 	/**
@@ -61,15 +70,13 @@ function SnakeGame(element){
 				                 new Point(11, 15), new Point(10, 15), new Point(9, 15)];
 
 			game.view.initPlayField();
-
-			this.nextFrame();
-
 			game.inputInterface.startListening();
+		};
 
+		this.playGame = function(){
+			this.nextFrame();
 			mainIntervalId = setInterval(this.nextFrame, game.config.FRAME_INTERVAL);
-
 			game.nowPlaying = true;
-
 		};
 
 		this.gameOver = function(){
@@ -77,9 +84,14 @@ function SnakeGame(element){
 			alert("GAME OVER");
 		};
 
-		this.stopGame = function(){
+		this.quitGame = function(){
 			clearInterval(mainIntervalId);
 			game.view.clear();
+			game.nowPlaying = false;
+		};
+
+		this.pauseGame = function(){
+			clearInterval(mainIntervalId);
 			game.nowPlaying = false;
 		};
 
