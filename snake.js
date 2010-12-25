@@ -43,18 +43,18 @@ function SnakeGame(element){
 		var mainIntervalId;
 
 		this.initGame = function(){
-			game.canvas.$DOMCanvas = $("#canvas");
 
 			// Create snake body and assign it to the snake
-			var snakeBody = [new Point(7, 4), new Point(6, 4), new Point(5, 4),
-			                 new Point(4, 4), new Point(3, 4)];
-			game.snake.points = snakeBody;
+			// @todo Make sure it is within canvas, if user changes canvas width/height
+			game.snake.points = [new Point(17, 15), new Point(16, 15), new Point(15, 15),
+				                 new Point(14, 15), new Point(13, 15), new Point(12, 15),
+				                 new Point(11, 15), new Point(10, 15), new Point(9, 15)];
 
 			game.view.initPlayField();
 
-			game.inputInterface.startListening();
-
 			this.nextFrame();
+
+			game.inputInterface.startListening();
 
 			mainIntervalId = setInterval(this.nextFrame, game.config.FRAME_INTERVAL);
 
@@ -69,7 +69,7 @@ function SnakeGame(element){
 			return true;
 		};
 
-		// Move the snake. Automatically handles direction
+		// Move the snake. Automatically handles self collision and walk through walls
 		var moveSnake = function(snake, desiredDirection){
 			var head = snake.points[0];
 
@@ -87,7 +87,7 @@ function SnakeGame(element){
 			}
 
 			snake.points.unshift(newHead);
-			// @todo pop() returns undefined if empty, check that it doesn't shrink too much
+
 			snake.points.pop();
 		};
 
