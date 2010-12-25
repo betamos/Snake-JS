@@ -74,7 +74,7 @@ function SnakeGame(element){
 			var head = snake.points[0];
 
 			// The direction the snake will move in this frame
-			snake.direction = actualSnakeDirection(snake.direction, desiredDirection);
+			snake.direction = snake.actualDirection(desiredDirection);
 
 			var newHead = movePoint(head, snake.direction);
 
@@ -94,21 +94,6 @@ function SnakeGame(element){
 		this.gameOver = function(){
 			clearInterval(mainIntervalId);
 			alert("GAME OVER");
-		};
-
-		// Get the direction which the snake will go this frame
-		// To determine this, it uses the inputinterface and the last frame's direction.
-		var actualSnakeDirection = function(snakeDirection, playerDirection){
-			// @todo performance increased if check is only made when necessary
-			if (oppositeDirections(snakeDirection, playerDirection)) {
-				// Continue moving in the snake's current direction
-				// ignoring the player
-				return snakeDirection;
-			}
-			else {
-				// Obey the player and move in that direction
-				return playerDirection;
-			}
 		};
 
 		// Take a point (oldPoint), "move" it in any direction (direction) and
@@ -160,21 +145,6 @@ function SnakeGame(element){
 				shiftedNumber = number;
 			}
 			return shiftedNumber;
-		};
-
-		// Helper function to find if two directions are in opposite to each other
-		// Returns true if the directions are in opposite to each other, false otherwise
-		var oppositeDirections = function(direction1, direction2){
-
-			// @see Declaration of constants to understand.
-			// E.g. UP is defined as 1 while down is defined as -1
-			if (Math.abs(direction1) == Math.abs(direction2) &&
-					Util.sign(direction1 * direction2) == -1) {
-				return true;
-			}
-			else {
-				return false;
-			}
 		};
 
 		// Check if a specific point is inside the canvas
@@ -304,6 +274,20 @@ function SnakeGame(element){
 			}
 			return false;
 		};
+
+		// Get the direction which the snake will go this frame
+		// The desired direction is usually provided by the player
+		this.actualDirection = function(desiredDirection){
+			if (Util.oppositeDirections(this.direction, desiredDirection)) {
+				// Continue moving in the snake's current direction
+				// ignoring the player
+				return this.direction;
+			}
+			else {
+				// Obey the player and move in that direction
+				return desiredDirection;
+			}
+		};
 	}
 
 	/**
@@ -343,6 +327,21 @@ function SnakeGame(element){
 					return 0;
 				else
 					return undefined;
+			},
+
+			// Helper function to find if two directions are in opposite to each other
+			// Returns true if the directions are in opposite to each other, false otherwise
+			oppositeDirections : function(direction1, direction2){
+		
+				// @see Declaration of constants to understand.
+				// E.g. UP is defined as 1 while down is defined as -1
+				if (Math.abs(direction1) == Math.abs(direction2) &&
+						Util.sign(direction1 * direction2) == -1) {
+					return true;
+				}
+				else {
+					return false;
+				}
 			}
 	};
 };
