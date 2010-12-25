@@ -10,9 +10,7 @@
  * Everything associated with the snake game should be encapsulated within
  * this namespace
  */
-//@todo the constructor should probably take some arguments
-//like pointsize, canvaswidth and height and the DOM element
-//for the game itself.
+// @todo the constructor should provide an optional user defined config
 function SnakeGame(element){
 	var game = this;
 
@@ -78,13 +76,12 @@ function SnakeGame(element){
 				game.gameModel.gameOver();
 				return false;
 			}
-			// @todo also check if it enters itself, goes thru wall or catches candy?
 			// Separate to different local functions
 
 			game.snake.direction = direction;
 
 			game.snake.points.unshift(newHead);
-			// @todo pop() returns undefined if empty, check that it doesn't shrink too far
+			// @todo pop() returns undefined if empty, check that it doesn't shrink too much
 			game.snake.points.pop();
 
 			// Render
@@ -334,6 +331,9 @@ function SnakeGame(element){
 	 * Provides some utility methods which don't fit anywhere else.
 	 */
 	var Util = {
+			
+			// Takes a number and returns the sign of it.
+			// E.g. -56 -> -1, 57 -> 1, 0 -> 0
 			sign : function(number){
 				if(number > 0)
 					return 1;
