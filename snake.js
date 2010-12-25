@@ -1,6 +1,7 @@
 /**
  * Snake The Game
- * @author Didrik Nordström, didrik@betamos.se
+ * By Didrik Nordström, http://betamos.se
+ * MIT Licensed
  */
 
 /**
@@ -12,36 +13,27 @@
 // @todo the constructor should probably take some arguments
 // like pointsize, canvaswidth and height and the DOM element
 // for the game itself.
-function SnakeGame(jQ){
+function SnakeGame(element){
 	var game = this;
 	
-	// @todo Check how to do it properly
-	var $ = jQuery;
-	if (typeof jQ != "undefined") {
-		$ = jQ;
-	}
-	
     this.config = {
-    	// @todo Changing point size doesn't change the CSS for the square. So maybe it
-    	// shouldn't be in config, or it should change
-		CANVAS_POINT_SIZE : 15,
 		CANVAS_WIDTH : 40,
 		CANVAS_HEIGHT : 30,
-		FRAME_INTERVAL : 100,
-		JQUERY_DOM_ELEMENT : $("#canvas")
+		FRAME_INTERVAL : 100
     };
 
     this.constants = {
         DIRECTION_UP : 1,
         DIRECTION_RIGHT : 2,
         DIRECTION_DOWN : -1,
-        DIRECTION_LEFT : -2
+        DIRECTION_LEFT : -2,
+		CANVAS_POINT_SIZE : 15
     };
 
     this.gameModel = new GameModel();
     this.snake = new Snake();
     this.canvas = new Canvas(this.config.CANVAS_WIDTH, this.config.CANVAS_HEIGHT);
-    this.view = new DOMView(this.config.JQUERY_DOM_ELEMENT);
+    this.view = new DOMView(element);
     this.inputInterface = new InputInterface(this.constants.DIRECTION_RIGHT);
 
     /**
@@ -253,42 +245,47 @@ function SnakeGame(jQ){
     /**
      * DOMVIEW OBJECT
      *
-     * This object is responsible for rendering the view to screen.
+     * This object is responsible for rendering the objects to the screen.
+     * It creates DOM-elements to do so.
      */
-    function DOMView($DOMElement) {
-    	this.$playField = $DOMElement;
+    function DOMView(element) {
+    	this.playField = element;
 
     	this.initPlayField = function(){
-        	this.$playField.css({
-        		position : "relative",
-        		width : (game.config.CANVAS_WIDTH * game.config.CANVAS_POINT_SIZE) + "px",
-        		height : (game.config.CANVAS_HEIGHT * game.config.CANVAS_POINT_SIZE) + "px",
-        		backgroundColor : "#000"
-        	});
+    		with (this.playField.style) {
+	        	position = "relative";
+	        	width = (game.config.CANVAS_WIDTH * game.constants.CANVAS_POINT_SIZE) + "px";
+	        	height = (game.config.CANVAS_HEIGHT * game.constants.CANVAS_POINT_SIZE) + "px";
+    		}
         };
 
         this.renderPoints = function(points, name){
         	
-        	var $pointsParent = $("<div />").addClass(name);
+        	var pointsParent = document.createElement("div");
+        	pointsParent.className = name;
         	
         	for (i in points) {
         		
-        		var $point = $("<div />").addClass("point");
+        		var $point = document.createElement("div");
+        		$point.className = "point";
         		
-        		$point.css({
-        			left : (points[i].left * game.config.CANVAS_POINT_SIZE) + "px",
-        			top : (points[i].top * game.config.CANVAS_POINT_SIZE) + "px"
-        		});
+        		with ($point.style) {
+        			left = (points[i].left * game.constants.CANVAS_POINT_SIZE) + "px";
+        			top = (points[i].top * game.constants.CANVAS_POINT_SIZE) + "px";
+        		}
         		
-        		$pointsParent.append($point);
+        		pointsParent.appendChild($point);
         		
         	}
         	
-        	this.$playField.append($pointsParent);
+        	this.playField.appendChild(pointsParent);
         };
 
         this.clear = function() {
-        	this.$playField.empty();
+        	while (this.playField.hasChildNodes())
+        	{
+        		this.playField.removeChild(this.playField.lastChild);       
+        	}
         };
     }
 
