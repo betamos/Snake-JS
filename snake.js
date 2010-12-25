@@ -74,9 +74,9 @@ function SnakeGame(element){
 			var head = snake.points[0];
 
 			// The direction the snake will move in this frame
-			var direction = actualSnakeDirection(snake.direction, desiredDirection);
+			snake.direction = actualSnakeDirection(snake.direction, desiredDirection);
 
-			var newHead = movePoint(head, direction);
+			var newHead = movePoint(head, snake.direction);
 
 			if (!insideCanvas(newHead, game.canvas))
 				shiftPointIntoCanvas(newHead, game.canvas);
@@ -85,8 +85,6 @@ function SnakeGame(element){
 				game.gameModel.gameOver();
 				return false;
 			}
-
-			snake.direction = direction;
 
 			snake.points.unshift(newHead);
 			// @todo pop() returns undefined if empty, check that it doesn't shrink too much
