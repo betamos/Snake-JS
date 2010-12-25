@@ -61,34 +61,36 @@ function SnakeGame(element){
 		};
 
 		this.nextFrame = function(){
-			var head = game.snake.points[0];
+			moveSnake(game.snake, game.inputInterface.lastDirection);
+			// Render
+			game.view.clear();
+			game.view.renderPoints(game.snake.points, "snake");
+
+			return true;
+		};
+
+		// Move the snake. Automatically handles direction
+		var moveSnake = function(snake, desiredDirection){
+			var head = snake.points[0];
 
 			// The direction the snake will move in this frame
-			var direction = actualSnakeDirection(game.snake.direction,
-					game.inputInterface.lastDirection);
+			var direction = actualSnakeDirection(snake.direction, desiredDirection);
 
 			var newHead = movePoint(head, direction);
 
 			if (!insideCanvas(newHead, game.canvas))
 				shiftPointIntoCanvas(newHead, game.canvas);
 
-			if (game.snake.collidesWith(newHead)) {
+			if (snake.collidesWith(newHead)) {
 				game.gameModel.gameOver();
 				return false;
 			}
-			// Separate to different local functions
 
-			game.snake.direction = direction;
+			snake.direction = direction;
 
-			game.snake.points.unshift(newHead);
+			snake.points.unshift(newHead);
 			// @todo pop() returns undefined if empty, check that it doesn't shrink too much
-			game.snake.points.pop();
-
-			// Render
-			game.view.clear();
-			game.view.renderPoints(game.snake.points, "snake");
-
-			return true;
+			snake.points.pop();
 		};
 
 		this.gameOver = function(){
