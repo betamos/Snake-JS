@@ -12,15 +12,18 @@
  * Everything associated with the snake game should be encapsulated within
  * this function to avoid pollution of the global namespace
  */
-// @todo the constructor should provide an optional user defined config
-function SnakeGame(element){
+function SnakeGame(element, config){
 	var game = this;
 
-	this.config = {
+	var utilities = new Utilities();
+
+	var defaultConfig = {
 			CANVAS_WIDTH : 40,
 			CANVAS_HEIGHT : 30,
 			FRAME_INTERVAL : 100
 	};
+
+	this.config = config ? utilities.mergeObjects(defaultConfig, config) : defaultConfig ;
 
 	this.constants = {
 			DIRECTION_UP : 1,
@@ -168,11 +171,11 @@ function SnakeGame(element){
 		// E.g.2 if nubmer = -1, range=10, returns 9
 		var shiftIntoRange = function(number, range) {
 			var shiftedNumber, steps;
-			if (Util.sign(number) == 1){
+			if (utilities.sign(number) == 1){
 				steps = Math.floor(number/range);
 				shiftedNumber = number - (range * steps);
 			}
-			else if (Util.sign(number) == -1){
+			else if (utilities.sign(number) == -1){
 				steps = Math.floor(Math.abs(number)/range) + 1;
 				shiftedNumber = number + (range * steps);
 			}
@@ -327,7 +330,7 @@ function SnakeGame(element){
 		// Get the direction which the snake will go this frame
 		// The desired direction is usually provided by the player
 		this.actualDirection = function(desiredDirection){
-			if (Util.oppositeDirections(this.direction, desiredDirection)) {
+			if (utilities.oppositeDirections(this.direction, desiredDirection)) {
 				// Continue moving in the snake's current direction
 				// ignoring the player
 				return this.direction;
@@ -359,38 +362,49 @@ function SnakeGame(element){
 	}
 
 	/**
-	 * UTIL OBJECT
+	 * UTILITIES OBJECT
 	 *
 	 * Provides some utility methods which don't fit anywhere else.
 	 */
-	var Util = {
-			
-			// Takes a number and returns the sign of it.
-			// E.g. -56 -> -1, 57 -> 1, 0 -> 0
-			sign : function(number){
-				if(number > 0)
-					return 1;
-				else if (number < 0)
-					return -1;
-				else if (number === 0)
-					return 0;
-				else
-					return undefined;
-			},
+	function Utilities() {
 
-			// Helper function to find if two directions are in opposite to each other
-			// Returns true if the directions are in opposite to each other, false otherwise
-			oppositeDirections : function(direction1, direction2){
-		
-				// @see Declaration of constants to understand.
-				// E.g. UP is defined as 1 while down is defined as -1
-				if (Math.abs(direction1) == Math.abs(direction2) &&
-						Util.sign(direction1 * direction2) == -1) {
-					return true;
-				}
-				else {
-					return false;
-				}
+		// Takes a number and returns the sign of it.
+		// E.g. -56 -> -1, 57 -> 1, 0 -> 0
+		this.sign = function(number){
+			if(number > 0)
+				return 1;
+			else if (number < 0)
+				return -1;
+			else if (number === 0)
+				return 0;
+			else
+				return undefined;
+		};
+
+		// Helper function to find if two directions are in opposite to each other
+		// Returns true if the directions are in opposite to each other, false otherwise
+		this.oppositeDirections = function(direction1, direction2){
+	
+			// @see Declaration of constants to understand.
+			// E.g. UP is defined as 1 while down is defined as -1
+			if (Math.abs(direction1) == Math.abs(direction2) &&
+					this.sign(direction1 * direction2) == -1) {
+				return true;
 			}
-	};
+			else {
+				return false;
+			}
+		};
+
+		this.mergeObjects = function mergeObjects(slave, master){
+			var merged = {};
+			for (i in slave) {
+				if (typeof master[i] === "undefined")
+					merged[i] = slave[i];
+				else
+					merged[i] = master[i];
+			}
+			return merged;
+		};
+	}
 };
