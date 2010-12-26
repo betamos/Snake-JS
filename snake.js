@@ -18,9 +18,9 @@ function SnakeGame(element, config){
 	var utilities = new Utilities();
 
 	var defaultConfig = {
-			CANVAS_WIDTH : 40,
-			CANVAS_HEIGHT : 30,
-			FRAME_INTERVAL : 100
+			canvasWidth : 40,
+			canvasHeight : 30,
+			frameInterval : 100
 	};
 
 	this.config = config ? utilities.mergeObjects(defaultConfig, config) : defaultConfig ;
@@ -35,7 +35,7 @@ function SnakeGame(element, config){
 
 	this.gameModel = new GameModel();
 	this.snake = new Snake();
-	this.canvas = new Canvas(this.config.CANVAS_WIDTH, this.config.CANVAS_HEIGHT);
+	this.canvas = new Canvas(this.config.canvasWidth, this.config.canvasHeight);
 	this.view = new DOMView(element);
 	this.inputInterface = new InputInterface(this.constants.DIRECTION_RIGHT);
 
@@ -79,7 +79,7 @@ function SnakeGame(element, config){
 
 		this.playGame = function(){
 			this.nextFrame();
-			mainIntervalId = setInterval(this.nextFrame, game.config.FRAME_INTERVAL);
+			mainIntervalId = setInterval(this.nextFrame, game.config.frameInterval);
 			game.inputInterface.startListening();
 			game.nowPlaying = true;
 		};
@@ -273,8 +273,8 @@ function SnakeGame(element, config){
 		this.initPlayField = function(){
 			with (this.playField.style) {
 				position = "relative";
-				width = (game.config.CANVAS_WIDTH * game.constants.CANVAS_POINT_SIZE) + "px";
-				height = (game.config.CANVAS_HEIGHT * game.constants.CANVAS_POINT_SIZE) + "px";
+				width = (game.config.canvasWidth * game.constants.CANVAS_POINT_SIZE) + "px";
+				height = (game.config.canvasHeight * game.constants.CANVAS_POINT_SIZE) + "px";
 			}
 		};
 
