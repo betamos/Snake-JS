@@ -396,13 +396,14 @@ function SnakeGame(element, config){
 			}
 		};
 
+		// Merge two flat objects and return the modified object.
 		this.mergeObjects = function mergeObjects(slave, master){
 			var merged = {};
-			for (i in slave) {
-				if (typeof master[i] === "undefined")
-					merged[i] = slave[i];
+			for (key in slave) {
+				if (typeof master[key] === "undefined")
+					merged[key] = slave[key];
 				else
-					merged[i] = master[i];
+					merged[key] = master[key];
 			}
 			return merged;
 		};
