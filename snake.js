@@ -1,6 +1,8 @@
 /**
- * Snake The Game
- * By Didrik Nordström, http://betamos.se
+ * Snake-JS
+ * 
+ * By Didrik Nordstrom, http://betamos.se
+ * Follow the project on github: http://github.com/betamos/Snake-JS
  * MIT Licensed
  */
 
@@ -8,7 +10,7 @@
  * MAIN GAME OBJECT
  *
  * Everything associated with the snake game should be encapsulated within
- * this namespace
+ * this function to avoid pollution of the global namespace
  */
 // @todo the constructor should provide an optional user defined config
 function SnakeGame(element){
