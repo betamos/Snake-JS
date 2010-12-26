@@ -201,29 +201,29 @@ function SnakeGame(element){
 		this.lastDirection = initialDirection;
 		this.startListening = function(){
 			if (!listening) {
-				window.addEventListener('keydown', handleKeyPress);
+				window.addEventListener("keydown", handleKeyPress, true);
 				listening = true;
 			}
 		};
 		this.stopListening = function(){
 			if (listening) {
-				window.removeEventListener('keydown', handleKeyPress);
+				window.removeEventListener("keydown", handleKeyPress, true);
 				listening = false;
 			}
 		};
 		var handleKeyPress = function(event){
 			// If the key pushed is an arrow key
 			if (arrowKeys.indexOf(event.keyCode) >= 0) {
-				handleArrowKeyPress(event.keyCode);
+				handleArrowKeyPress(event);
 
 				// @todo Return false doesn't seem to prevent scrolling
 				// with arrow keys. See what can be done
 				return false;
 			}
 		};
-		var handleArrowKeyPress = function(keyCode){
+		var handleArrowKeyPress = function(event){
 			with (game.constants) {
-				switch (keyCode) {
+				switch (event.keyCode) {
 				case 37:
 					game.inputInterface.lastDirection = DIRECTION_LEFT;
 					break;
@@ -238,6 +238,7 @@ function SnakeGame(element){
 					break;
 				}
 			}
+			event.preventDefault();
 		};
 	}
 
