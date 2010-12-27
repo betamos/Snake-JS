@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Snake JS Example</title>
+<link href="../snake.css" type="text/css" rel="stylesheet" media="screen,projection" />
+<script type="text/javascript" src="../snake.js"></script>
+<script type="text/javascript">
+
+window.onload = function(){
+	// The DOM-element which will hold the playfield
+	// If you are using jQuery, you can use < var element = $("#parent"); > instead
+	var parentElement = document.getElementById("parent");
+
+	// User defined settings overrides default settings.
+	// See snake.js for all available options.
+	var settings = {
+		canvasHeight : 20
+	};
+
+	// Create the game object. The settings object is NOT required.
+	// The parentElement however is required
+	var game = new SnakeJS(parentElement, settings);
+
+	// Start playing
+	game.play();
+
+};
+
+</script>
+</head>
+<body>
+
+<h1>Snake JS Example</h1>
+
+<div id="parent"></div>
+
+<p>
+<strong>Use the arrow keys to control the snake.</strong>
+</p>
+
+<p>
+Made by <a href="http://betamos.se/">Didrik Nordström</a>.
+<br />
+For more information, see the <a href="../README.md">README file</a>.
+</p>
+
+</body>
+</html>
