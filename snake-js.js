@@ -33,7 +33,7 @@ function SnakeJS(parentElement, config){
 			CANVAS_POINT_SIZE : 16
 	};
 
-	this.gameModel = new GameModel();
+	this.engine = new Engine();
 	this.snake = new Snake();
 	this.canvas = new Canvas(this.config.canvasWidth, this.config.canvasHeight);
 	this.view = new DOMView(parentElement);
@@ -42,20 +42,20 @@ function SnakeJS(parentElement, config){
 	this.nowPlaying = false;
 
 	this.play = function(){
-		this.gameModel.initGame();
-		this.gameModel.playGame();
+		this.engine.initGame();
+		this.engine.playGame();
 	};
 
 	this.quit = function(){
-		this.gameModel.quitGame();
+		this.engine.quitGame();
 	};
 
 	this.pause = function(){
-		this.gameModel.pauseGame();
+		this.engine.pauseGame();
 	};
 
 	this.unpause = function(){
-		this.gameModel.playGame();
+		this.engine.playGame();
 	};
 
 	/**
@@ -63,7 +63,7 @@ function SnakeJS(parentElement, config){
 	 *
 	 * This object is doing the game logic, frame management etc.
 	 */
-	function GameModel() {
+	function Engine() {
 		var mainIntervalId;
 
 		this.initGame = function(){
@@ -123,7 +123,7 @@ function SnakeJS(parentElement, config){
 				shiftPointIntoCanvas(newHead, game.canvas);
 
 			if (snake.collidesWith(newHead)) {
-				game.gameModel.gameOver();
+				game.engine.gameOver();
 				return false;
 			}
 
