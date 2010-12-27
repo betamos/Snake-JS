@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>Snake JS Example</title>
-<link href="../snake-js.css" type="text/css" rel="stylesheet" media="screen,projection" />
-<script type="text/javascript" src="../snake-js.js"></script>
+<link href="../snake-js.css" rel="stylesheet" />
+<script src="../snake-js.js" type="text/javascript"></script>
 <script type="text/javascript">
 
-window.onload = function(){
+// If you are using jQuery, use < $(document).ready(function(){ ... }) > instead
+document.addEventListener("DOMContentLoaded", function(){
+
 	// The DOM-element which will hold the playfield
 	// If you are using jQuery, you can use < var element = $("#parent"); > instead
 	var parentElement = document.getElementById("parent");
@@ -25,7 +27,7 @@ window.onload = function(){
 	// Start playing
 	game.play();
 
-};
+}, true);
 
 </script>
 </head>
