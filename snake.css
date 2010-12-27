@@ -1,0 +1,23 @@
+
+#snake-js {
+	position: relative !important;
+	background: black;
+}
+
+#snake-js .point {
+	position: absolute !important;
+	top: 0;
+	left: 0;
+	width: 16px;
+	height: 16px;
+}
+
+#snake-js .snake {
+	position: absolute !important;
+	top: 0;
+	left: 0;
+}
+
+#snake-js .snake > .point {
+	background: green;
+}
