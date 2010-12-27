@@ -12,7 +12,7 @@
  * Everything associated with the snake game should be encapsulated within
  * this function to avoid pollution of the global namespace
  */
-function SnakeGame(element, config){
+function SnakeJS(element, config){
 	var game = this;
 
 	var utilities = new Utilities();
@@ -85,7 +85,7 @@ function SnakeGame(element, config){
 		};
 
 		this.gameOver = function(){
-			this.stopGame();
+			this.quitGame();
 			alert("GAME OVER");
 		};
 
@@ -267,12 +267,14 @@ function SnakeGame(element, config){
 	 * This object is responsible for rendering the objects to the screen.
 	 * It creates DOM-elements to do so.
 	 */
-	function DOMView(element) {
-		this.playField = element;
+	function DOMView(parentElement) {
+		this.playField;
 
 		this.initPlayField = function(){
+			this.playField = document.createElement("div");
+			this.playField.setAttribute("id", "snake-js");
+			parentElement.appendChild(this.playField);
 			with (this.playField.style) {
-				position = "relative";
 				width = (game.config.canvasWidth * game.constants.CANVAS_POINT_SIZE) + "px";
 				height = (game.config.canvasHeight * game.constants.CANVAS_POINT_SIZE) + "px";
 			}
