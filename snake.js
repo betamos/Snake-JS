@@ -12,7 +12,7 @@
  * Everything associated with the snake game should be encapsulated within
  * this function to avoid pollution of the global namespace
  */
-function SnakeJS(element, config){
+function SnakeJS(parentElement, config){
 	var game = this;
 
 	var utilities = new Utilities();
@@ -36,7 +36,7 @@ function SnakeJS(element, config){
 	this.gameModel = new GameModel();
 	this.snake = new Snake();
 	this.canvas = new Canvas(this.config.canvasWidth, this.config.canvasHeight);
-	this.view = new DOMView(element);
+	this.view = new DOMView(parentElement);
 	this.inputInterface = new InputInterface(this.constants.DIRECTION_RIGHT);
 
 	this.nowPlaying = false;
