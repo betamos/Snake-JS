@@ -65,6 +65,7 @@ function SnakeJS(parentElement, config){
 	 */
 	function Engine() {
 		var mainIntervalId;
+		var candy;
 
 		this.initGame = function(){
 
@@ -73,6 +74,8 @@ function SnakeJS(parentElement, config){
 			game.snake.points = [new Point(17, 15), new Point(16, 15), new Point(15, 15),
 				                 new Point(14, 15), new Point(13, 15), new Point(12, 15),
 				                 new Point(11, 15), new Point(10, 15), new Point(9, 15)];
+
+			candy = randomPoint();
 
 			game.view.initPlayField();
 		};
@@ -103,9 +106,15 @@ function SnakeJS(parentElement, config){
 
 		this.nextFrame = function(){
 			moveSnake(game.snake, game.inputInterface.lastDirection);
+			
+			if(candy.collidesWith(game.snake.points[0])) {
+				game.snake.fatness += 3;
+				candy = randomPoint();
+			}
 			// Render
 			game.view.clear();
 			game.view.renderPoints(game.snake.points, "snake");
+			game.view.renderPoints([candy], "candy");
 
 			return true;
 		};
@@ -129,7 +138,10 @@ function SnakeJS(parentElement, config){
 
 			snake.points.unshift(newHead);
 
-			snake.points.pop();
+			if (snake.fatness >= 1)
+				snake.fatness--;
+			else
+				snake.points.pop();
 			
 			return true;
 		};
@@ -195,6 +207,13 @@ function SnakeJS(parentElement, config){
 			else {
 				return true;
 			}
+		};
+
+		var randomPoint = function(){
+			var left = utilities.randomInteger(0, game.canvas.width - 1);
+			var top = utilities.randomInteger(0, game.canvas.height - 1);
+			var point = new Point(left, top);
+			return point;
 		};
 	}
 
@@ -283,7 +302,7 @@ function SnakeJS(parentElement, config){
 		this.renderPoints = function(points, name){
 
 			var pointsParent = document.createElement("div");
-			pointsParent.className = name;
+			pointsParent.className = name + " collection";
 
 			for (i in points) {
 
@@ -318,6 +337,7 @@ function SnakeJS(parentElement, config){
 	function Snake() {
 		this.direction = game.constants.DIRECTION_RIGHT;
 		this.points = [];
+		this.fatness = 0;
 
 		// Check if any of this objects points collides with an external point
 		// Returns true if any collision occurs, false otherwise
@@ -408,6 +428,12 @@ function SnakeJS(parentElement, config){
 					merged[key] = master[key];
 			}
 			return merged;
+		};
+
+		// Returns an integer between min and max, including both min and max
+		this.randomInteger = function(min, max){
+			var randomNumber = min + Math.floor(Math.random() * (max + 1));
+			return randomNumber;
 		};
 	}
 };
