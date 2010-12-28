@@ -12,7 +12,7 @@
 	height: 16px;
 }
 
-#snake-js .snake {
+#snake-js .collection {
 	position: absolute !important;
 	top: 0;
 	left: 0;
@@ -20,4 +20,8 @@
 
 #snake-js .snake > .point {
 	background: green;
+}
+
+#snake-js .candy > .point {
+	background: pink;
 }
