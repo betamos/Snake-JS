@@ -13,7 +13,6 @@
  * this function to avoid pollution of the global namespace
  */
 function SnakeJS(parentElement, config){
-	var game = this;
 
 	var utilities = new Utilities();
 
@@ -23,9 +22,9 @@ function SnakeJS(parentElement, config){
 			frameInterval : 100
 	};
 
-	this.config = config ? utilities.mergeObjects(defaultConfig, config) : defaultConfig ;
+	var config = config ? utilities.mergeObjects(defaultConfig, config) : defaultConfig ;
 
-	this.constants = {
+	var constants = {
 			DIRECTION_UP : 1,
 			DIRECTION_RIGHT : 2,
 			DIRECTION_DOWN : -1,
@@ -33,29 +32,23 @@ function SnakeJS(parentElement, config){
 			CANVAS_POINT_SIZE : 16
 	};
 
-	this.engine = new Engine();
-	this.snake = new Snake();
-	this.canvas = new Canvas(this.config.canvasWidth, this.config.canvasHeight);
-	this.view = new DOMView(parentElement);
-	this.inputInterface = new InputInterface(this.constants.DIRECTION_RIGHT);
-
-	this.nowPlaying = false;
+	var engine = new Engine(parentElement);
 
 	this.play = function(){
-		this.engine.initGame();
-		this.engine.playGame();
+		engine.initGame();
+		engine.playGame();
 	};
 
 	this.quit = function(){
-		this.engine.quitGame();
+		engine.quitGame();
 	};
 
 	this.pause = function(){
-		this.engine.pauseGame();
+		engine.pauseGame();
 	};
 
 	this.unpause = function(){
-		this.engine.playGame();
+		engine.playGame();
 	};
 
 	/**
@@ -63,58 +56,67 @@ function SnakeJS(parentElement, config){
 	 *
 	 * This object is doing the game logic, frame management etc.
 	 */
-	function Engine() {
-		var mainIntervalId;
+	function Engine(parentElement) {
 		var candy;
+		var snake = new Snake();
+		var view = new DOMView(parentElement);
+		var inputInterface = new InputInterface(constants.DIRECTION_RIGHT);
+		var canvas = new Canvas(config.canvasWidth, config.canvasHeight);
+
+		var nowPlaying = false;
+		var mainIntervalId;
 
 		this.initGame = function(){
 
 			// Create snake body and assign it to the snake
 			// @todo Make sure it is within canvas, if user changes canvas width/height
-			game.snake.points = [new Point(17, 15), new Point(16, 15), new Point(15, 15),
+			snake.points = [new Point(17, 15), new Point(16, 15), new Point(15, 15),
 				                 new Point(14, 15), new Point(13, 15), new Point(12, 15),
 				                 new Point(11, 15), new Point(10, 15), new Point(9, 15)];
 
 			candy = randomPoint();
 
-			game.view.initPlayField();
+			view.initPlayField();
 		};
 
 		this.playGame = function(){
-			this.nextFrame();
-			mainIntervalId = setInterval(this.nextFrame, game.config.frameInterval);
-			game.inputInterface.startListening();
-			game.nowPlaying = true;
+			nextFrame();
+			mainIntervalId = setInterval(nextFrame, config.frameInterval);
+			inputInterface.startListening();
+			nowPlaying = true;
 		};
 
-		this.gameOver = function(){
-			this.quitGame();
+		var gameOver = function(){
+			quitGame();
 			alert("GAME OVER");
 		};
 
-		this.quitGame = function(){
+		var quitGame = this.quitGame = function(){
 			clearInterval(mainIntervalId);
-			game.inputInterface.stopListening();
-			game.view.clear();
-			game.nowPlaying = false;
+			inputInterface.stopListening();
+			nowPlaying = false;
 		};
 
 		this.pauseGame = function(){
 			clearInterval(mainIntervalId);
-			game.nowPlaying = false;
+			inputInterface.startListening();
+			nowPlaying = false;
 		};
 
-		this.nextFrame = function(){
-			moveSnake(game.snake, game.inputInterface.lastDirection);
+		var nextFrame = function(){
+			if (!moveSnake(snake, inputInterface.getLastDirection())) {
+				gameOver();
+				return false;
+			}
 			
-			if(candy.collidesWith(game.snake.points[0])) {
-				game.snake.fatness += 3;
+			if(candy.collidesWith(snake.points[0])) {
+				snake.fatness += 3;
 				candy = randomPoint();
 			}
 			// Render
-			game.view.clear();
-			game.view.renderPoints(game.snake.points, "snake");
-			game.view.renderPoints([candy], "candy");
+			view.clear();
+			view.renderPoints(snake.points, "snake");
+			view.renderPoints([candy], "candy");
 
 			return true;
 		};
@@ -128,11 +130,11 @@ function SnakeJS(parentElement, config){
 
 			var newHead = movePoint(head, snake.direction);
 
-			if (!insideCanvas(newHead, game.canvas))
-				shiftPointIntoCanvas(newHead, game.canvas);
+			if (!insideCanvas(newHead, canvas))
+				shiftPointIntoCanvas(newHead, canvas);
 
 			if (snake.collidesWith(newHead)) {
-				game.engine.gameOver();
+				// Can't move. Collides with itself
 				return false;
 			}
 
@@ -151,7 +153,7 @@ function SnakeJS(parentElement, config){
 		// Does not care about borders, candy or walls. Just shifting position.
 		var movePoint = function(oldPoint, direction){
 			var newPoint;
-			with (game.constants) {
+			with (constants) {
 				switch (direction) {
 				case DIRECTION_LEFT:
 					newPoint = new Point(oldPoint.left-1, oldPoint.top);
@@ -210,8 +212,8 @@ function SnakeJS(parentElement, config){
 		};
 
 		var randomPoint = function(){
-			var left = utilities.randomInteger(0, game.canvas.width - 1);
-			var top = utilities.randomInteger(0, game.canvas.height - 1);
+			var left = utilities.randomInteger(0, canvas.width - 1);
+			var top = utilities.randomInteger(0, canvas.height - 1);
 			var point = new Point(left, top);
 			return point;
 		};
@@ -222,7 +224,10 @@ function SnakeJS(parentElement, config){
 		// and not do other stuff, like scrolling up and down.
 		var arrowKeys = [37, 38, 39, 40];
 		var listening = false;
-		this.lastDirection = initialDirection;
+		var lastDirection = initialDirection;
+		this.getLastDirection = function(){
+			return lastDirection;
+		};
 		this.startListening = function(){
 			if (!listening) {
 				window.addEventListener("keydown", handleKeyPress, true);
@@ -246,19 +251,19 @@ function SnakeJS(parentElement, config){
 			}
 		};
 		var handleArrowKeyPress = function(event){
-			with (game.constants) {
+			with (constants) {
 				switch (event.keyCode) {
 				case 37:
-					game.inputInterface.lastDirection = DIRECTION_LEFT;
+					lastDirection = DIRECTION_LEFT;
 					break;
 				case 38:
-					game.inputInterface.lastDirection = DIRECTION_UP;
+					lastDirection = DIRECTION_UP;
 					break;
 				case 39:
-					game.inputInterface.lastDirection = DIRECTION_RIGHT;
+					lastDirection = DIRECTION_RIGHT;
 					break;
 				case 40:
-					game.inputInterface.lastDirection = DIRECTION_DOWN;
+					lastDirection = DIRECTION_DOWN;
 					break;
 				}
 			}
@@ -294,8 +299,8 @@ function SnakeJS(parentElement, config){
 			this.playField.setAttribute("id", "snake-js");
 			parentElement.appendChild(this.playField);
 			with (this.playField.style) {
-				width = (game.config.canvasWidth * game.constants.CANVAS_POINT_SIZE) + "px";
-				height = (game.config.canvasHeight * game.constants.CANVAS_POINT_SIZE) + "px";
+				width = (config.canvasWidth * constants.CANVAS_POINT_SIZE) + "px";
+				height = (config.canvasHeight * constants.CANVAS_POINT_SIZE) + "px";
 			}
 		};
 
@@ -310,8 +315,8 @@ function SnakeJS(parentElement, config){
 				$point.className = "point";
 
 				with ($point.style) {
-					left = (points[i].left * game.constants.CANVAS_POINT_SIZE) + "px";
-					top = (points[i].top * game.constants.CANVAS_POINT_SIZE) + "px";
+					left = (points[i].left * constants.CANVAS_POINT_SIZE) + "px";
+					top = (points[i].top * constants.CANVAS_POINT_SIZE) + "px";
 				}
 
 				pointsParent.appendChild($point);
@@ -335,7 +340,7 @@ function SnakeJS(parentElement, config){
 	 * The snake itself...
 	 */
 	function Snake() {
-		this.direction = game.constants.DIRECTION_RIGHT;
+		this.direction = constants.DIRECTION_RIGHT;
 		this.points = [];
 		this.fatness = 0;
 
