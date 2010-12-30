@@ -59,7 +59,7 @@ function SnakeJS(parentElement, config){
 	function Engine(parentElement) {
 		var candy;
 		var snake = new Snake();
-		var view = new DOMView(parentElement);
+		var view = new CanvasView(parentElement);
 		var inputInterface = new InputInterface(constants.DIRECTION_RIGHT);
 		var canvas = new Canvas(config.canvasWidth, config.canvasHeight);
 
@@ -331,6 +331,48 @@ function SnakeJS(parentElement, config){
 			{
 				this.playField.removeChild(this.playField.lastChild);       
 			}
+		};
+	}
+
+	/**
+	 * CANVASVIEW OBJECT
+	 *
+	 * This object is responsible for rendering the objects to the screen.
+	 * It uses the HTML5 Canvas element for rendering.
+	 */
+	function CanvasView(parentElement) {
+		var playField;
+		var ctx;
+		var fillStyles = {
+				snake : "green",
+				candy : "pink"
+		};
+
+		this.initPlayField = function(){
+			playField = document.createElement("canvas");
+			playField.setAttribute("id", "snake-js");
+			playField.setAttribute("width", config.canvasWidth * constants.CANVAS_POINT_SIZE);
+			playField.setAttribute("height", config.canvasHeight * constants.CANVAS_POINT_SIZE);
+			parentElement.appendChild(playField);
+			ctx = playField.getContext("2d");
+		};
+
+		this.renderPoints = function(points, name){
+
+			ctx.fillStyle = fillStyles[name];
+
+			for (i in points) {
+				var left = points[i].left * constants.CANVAS_POINT_SIZE;
+				var top = points[i].top * constants.CANVAS_POINT_SIZE;
+
+				ctx.fillRect(left, top, constants.CANVAS_POINT_SIZE, constants.CANVAS_POINT_SIZE);
+			}
+		};
+
+		this.clear = function() {
+			ctx.fillStyle = "black";
+			ctx.fillRect(0, 0, config.canvasWidth * constants.CANVAS_POINT_SIZE,
+					config.canvasHeight * constants.CANVAS_POINT_SIZE);
 		};
 	}
 
