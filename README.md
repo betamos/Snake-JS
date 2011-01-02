@@ -39,8 +39,8 @@ Purpose
 This purpose of Snake JS is (in this order)
 
 1.	to explore, discuss and practise good OOP design
-	in a simple and naked JavaScript-based environment
-2.	To adapt new web techniques, like the canvas element
+	in a simple and naked JavaScript-based environment,
+2.	to adapt new web techniques, like the HTML5 canvas element
 3.	to create an extremely entertaining game.
 
 The purpose is **not** to make the game cross-browser compatible. Hacks and inconsistensies are only applied when absolutely necessary.
