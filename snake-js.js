@@ -17,20 +17,23 @@ function SnakeJS(parentElement, config){
 	var utilities = new Utilities();
 
 	var defaultConfig = {
-			canvasWidth : 40,		// Width of the game canvas
-			canvasHeight : 30,		// Height of the game canvas
-			frameInterval : 100,	// Milliseconds between frames (@todo change to speed?)
-			pointSize : 16			// Size of one point (the snake is always one point thick)
+		canvasWidth : 40,			// Width of the game canvas
+		canvasHeight : 30,			// Height of the game canvas
+		frameInterval : 100,		// Milliseconds between frames (@todo change to speed?)
+		pointSize : 16,				// Size of one point (the snake is always one point thick)
+		backgroundColor : "black",	// The color of the background. CSS3 color values
+		snakeColor : "green",		// The color of the snake
+		candyColor : "pink"			// The color of the candy
 	};
 
 	// Merge user config with default config
 	var config = config ? utilities.mergeObjects(defaultConfig, config) : defaultConfig ;
 
 	var constants = {
-			DIRECTION_UP : 1,
-			DIRECTION_RIGHT : 2,
-			DIRECTION_DOWN : -1,
-			DIRECTION_LEFT : -2
+		DIRECTION_UP : 1,
+		DIRECTION_RIGHT : 2,
+		DIRECTION_DOWN : -1,
+		DIRECTION_LEFT : -2
 	};
 
 	var engine = new Engine(parentElement);
@@ -73,7 +76,7 @@ function SnakeJS(parentElement, config){
 		this.initGame = function(){
 
 			snake = new Snake();
-			view = new CanvasView(parentElement);
+			view = new View(parentElement, config.backgroundColor);
 
 			inputInterface = new InputInterface(
 					this.pauseGame,
@@ -128,7 +131,8 @@ function SnakeJS(parentElement, config){
 				gameOver();
 				return false;
 			}
-			
+
+			// If the snake hits a candy
 			if(candy.collidesWith(snake.points[0])) {
 				snake.fatness += 3;
 				candy = randomPoint(canvas);
@@ -137,8 +141,8 @@ function SnakeJS(parentElement, config){
 			// Clear the view to make room for a new frame
 			view.clear();
 			// Render the objects to the screen
-			view.renderPoints(snake.points, "snake");
-			view.renderPoints([candy], "candy");
+			view.renderPoints(snake.points, config.snakeColor);
+			view.renderPoint(candy, config.candyColor);
 
 			return true;
 		};
@@ -247,7 +251,6 @@ function SnakeJS(parentElement, config){
 	 * 
 	 * Takes input from the user, typically key strokes to steer the snake
 	 * 
-	 * @param initialDirection
 	 * @param pause A callback function to be executed when the window is blurred
 	 * @param unpause A callback function which executes when the window is in focus again
 	 * @returns {InputInterface}
@@ -328,9 +331,6 @@ function SnakeJS(parentElement, config){
 	function Canvas(width, height) {
 		this.width = width;
 		this.height = height;
-
-		// All objects within the canvas are in this array, like the snakebody, candy collection
-		this.contents = [];
 	}
 
 	/**
@@ -339,13 +339,9 @@ function SnakeJS(parentElement, config){
 	 * This object is responsible for rendering the objects to the screen.
 	 * It uses the HTML5 Canvas element for rendering.
 	 */
-	function CanvasView(parentElement) {
+	function View(parentElement, backgroundColor) {
 		var playField,			// The DOM <canvas> element
-			ctx,				// The canvas context
-			fillColors = {		// @todo Make an argument of the render functions instead
-				snake : "green",
-				candy : "pink"
-			};
+			ctx;				// The canvas context
 
 		this.initPlayField = function(){
 			playField = document.createElement("canvas");
@@ -356,20 +352,24 @@ function SnakeJS(parentElement, config){
 			ctx = playField.getContext("2d");
 		};
 
-		this.renderPoints = function(points, name){
+		this.renderPoint = function(point, color){
 
-			ctx.fillStyle = fillColors[name];
+			ctx.fillStyle = color || "white";
 
+			var left = point.left * config.pointSize;
+			var top = point.top * config.pointSize;
+
+			ctx.fillRect(left, top, config.pointSize, config.pointSize);
+		};
+
+		this.renderPoints = function(points, color){
 			for (i in points) {
-				var left = points[i].left * config.pointSize;
-				var top = points[i].top * config.pointSize;
-
-				ctx.fillRect(left, top, config.pointSize, config.pointSize);
+				this.renderPoint(points[i], color);
 			}
 		};
 
-		this.clear = function() {
-			ctx.fillStyle = "black";
+		this.clear = function(color) {
+			ctx.fillStyle = color || backgroundColor;
 			ctx.fillRect(0, 0,
 					config.canvasWidth * config.pointSize,
 					config.canvasHeight * config.pointSize);
