@@ -334,55 +334,6 @@ function SnakeJS(parentElement, config){
 	}
 
 	/**
-	 * DOMVIEW OBJECT
-	 *
-	 * This object is responsible for rendering the objects to the screen.
-	 * It creates DOM-elements to do so.
-	 */
-	function DOMView(parentElement) {
-		this.playField;
-
-		this.initPlayField = function(){
-			this.playField = document.createElement("div");
-			this.playField.setAttribute("id", "snake-js");
-			parentElement.appendChild(this.playField);
-			with (this.playField.style) {
-				width = (config.canvasWidth * config.pointSize) + "px";
-				height = (config.canvasHeight * config.pointSize) + "px";
-			}
-		};
-
-		this.renderPoints = function(points, name){
-
-			var pointsParent = document.createElement("div");
-			pointsParent.className = name + " collection";
-
-			for (i in points) {
-
-				var $point = document.createElement("div");
-				$point.className = "point";
-
-				with ($point.style) {
-					left = (points[i].left * config.pointSize) + "px";
-					top = (points[i].top * config.pointSize) + "px";
-				}
-
-				pointsParent.appendChild($point);
-
-			}
-
-			this.playField.appendChild(pointsParent);
-		};
-
-		this.clear = function() {
-			while (this.playField.hasChildNodes())
-			{
-				this.playField.removeChild(this.playField.lastChild);       
-			}
-		};
-	}
-
-	/**
 	 * CANVASVIEW OBJECT
 	 *
 	 * This object is responsible for rendering the objects to the screen.
