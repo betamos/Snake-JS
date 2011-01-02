@@ -17,13 +17,13 @@ function SnakeJS(parentElement, config){
 	var utilities = new Utilities();
 
 	var defaultConfig = {
-		canvasWidth : 40,			// Width of the game canvas
-		canvasHeight : 30,			// Height of the game canvas
-		frameInterval : 100,		// Milliseconds between frames (@todo change to speed?)
-		pointSize : 16,				// Size of one point (the snake is always one point thick)
-		backgroundColor : "black",	// The color of the background. CSS3 color values
-		snakeColor : "green",		// The color of the snake
-		candyColor : "pink"			// The color of the candy
+		canvasWidth : 40,				// Width of the game canvas
+		canvasHeight : 30,				// Height of the game canvas
+		frameInterval : 100,			// Milliseconds between frames (@todo change to speed?)
+		pointSize : 16,					// Size of one grid point (the snake is almost one grid point thick)
+		backgroundColor : "#f1ecce",	// The color of the background. CSS3 color values
+		snakeColor : "#4b4312",			// The color of the snake
+		candyColor : "#c6bc69"			// The color of the candy
 	};
 
 	// Merge user config with default config
@@ -99,7 +99,8 @@ function SnakeJS(parentElement, config){
 
 		this.playGame = function(){
 			nextFrame();
-			mainIntervalId = setInterval(nextFrame, config.frameInterval);
+			if (!nowPlaying)
+				mainIntervalId = setInterval(nextFrame, config.frameInterval);
 			inputInterface.startListening();
 			nowPlaying = true;
 		};
@@ -141,7 +142,7 @@ function SnakeJS(parentElement, config){
 			// Clear the view to make room for a new frame
 			view.clear();
 			// Render the objects to the screen
-			view.renderPoints(snake.points, config.snakeColor);
+			view.renderSnake(snake.points, config.snakeColor);
 			view.renderPoint(candy, config.candyColor);
 
 			return true;
@@ -368,11 +369,93 @@ function SnakeJS(parentElement, config){
 			}
 		};
 
+		this.renderSnake = function(points, color){
+			ctx.strokeStyle = color;
+			ctx.lineWidth = config.pointSize - 2;
+			ctx.lineJoin = "round";
+			ctx.lineCap = "round";
+			
+			// Bein path drawing.
+			ctx.beginPath();
+			
+			// Loop over the points, beginning with the head
+			for (var i = 0; i < points.length; i++) {
+
+				// Short name for the point we're looking at now
+				var currentPoint = points[i];
+
+				// If we're looking at the head
+				if (i === 0) {
+					// The position of this point in screen pixels
+					var currentPointPosition = getPointPivotPosition(currentPoint);
+					// Don't draw anything, just move the "pencil" to the position of the head
+					ctx.moveTo(currentPointPosition.left, currentPointPosition.top);
+				}
+				// If we're looking at any other point
+				else {
+					// Short name to the previous point (which we looked at in the last iteration)
+					var prevPoint = points[i-1];
+
+					// If these points are next to each other (Snake did NOT go through the wall here)
+					if(Math.abs(prevPoint.left - currentPoint.left) <= 1 && Math.abs(prevPoint.top - currentPoint.top) <= 1){
+						// The position of this point in screen pixels
+						var currentPointPosition = getPointPivotPosition(currentPoint);
+						// Draw pencil from the position of the "pencil" to this point
+						ctx.lineTo(currentPointPosition.left, currentPointPosition.top);
+					}
+					// If these points are far away from each other (Snake went through wall here)
+					else {
+						// Connect these points together. This method will simulate wall entrance/exit if necessary
+						connectWallPoints(prevPoint, currentPoint);
+					}
+				}
+			}
+			ctx.stroke();
+		};
+
 		this.clear = function(color) {
 			ctx.fillStyle = color || backgroundColor;
 			ctx.fillRect(0, 0,
 					config.canvasWidth * config.pointSize,
 					config.canvasHeight * config.pointSize);
+		};
+
+		var getPointPivotPosition = function(point) {
+			var position = {
+					left : point.left * config.pointSize + config.pointSize / 2,
+					top : point.top * config.pointSize + config.pointSize / 2
+			};
+			return position;
+		};
+
+		// Connect two points in opposite sides of the grid. Makes lines like Snake went through the wall
+		// Presumes that the "pencil" is moved to position of p1
+		var connectWallPoints = function(p1, p2) {
+
+			// The position of these points in screen pixels
+			var p2Position = getPointPivotPosition(p2);
+
+			// This holds -1 or 1 if points are separated horizontally, else 0
+			var leftOffset = utilities.sign(p2.left - p1.left);
+			// This holds -1 or 1 if points are separated vertically, else 0
+			var topOffset = utilities.sign(p2.top - p1.top);
+
+			// First let's look at p1
+			// Create a fake end point outside the canvas, next to p1
+			var fakeEndPoint = new Point(p1.left - leftOffset, p1.top - topOffset);
+			// And get the screen position
+			var fakeEndPointPosition = getPointPivotPosition(fakeEndPoint);
+			// End the current line (which was initially drawn outside this method) in this fake point
+			ctx.lineTo(fakeEndPointPosition.left, fakeEndPointPosition.top);
+
+			// Let's look at p2. Create a fakepoint again and get it's position...
+			var fakeStartPoint = new Point(p2.left + leftOffset, p2.top + topOffset);
+			var fakeStartPointPosition = getPointPivotPosition(fakeStartPoint);
+			// ...But this time, first move the pencil (without making a line) to the fake point
+			ctx.moveTo(fakeStartPointPosition.left, fakeStartPointPosition.top);
+			// Then make a line to p2. Note that these lines are not drawn, since this method
+			// only connects the lines, the drawing is handled outside this method
+			ctx.lineTo(p2Position.left, p2Position.top);
 		};
 	}
 
