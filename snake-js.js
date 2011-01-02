@@ -17,23 +17,27 @@ function SnakeJS(parentElement, config){
 	var utilities = new Utilities();
 
 	var defaultConfig = {
-			canvasWidth : 40,
-			canvasHeight : 30,
-			frameInterval : 100
+			canvasWidth : 40,		// Width of the game canvas
+			canvasHeight : 30,		// Height of the game canvas
+			frameInterval : 100,	// Milliseconds between frames (@todo change to speed?)
+			pointSize : 16			// Size of one point (the snake is always one point thick)
 	};
 
+	// Merge user config with default config
 	var config = config ? utilities.mergeObjects(defaultConfig, config) : defaultConfig ;
 
 	var constants = {
 			DIRECTION_UP : 1,
 			DIRECTION_RIGHT : 2,
 			DIRECTION_DOWN : -1,
-			DIRECTION_LEFT : -2,
-			CANVAS_POINT_SIZE : 16
+			DIRECTION_LEFT : -2
 	};
 
 	var engine = new Engine(parentElement);
 
+	/**
+	 * These methods below (play, quit, pause, unpause) are publically accessible.
+	 */
 	this.play = function(){
 		engine.initGame();
 		engine.playGame();
@@ -57,24 +61,36 @@ function SnakeJS(parentElement, config){
 	 * This object is doing the game logic, frame management etc.
 	 */
 	function Engine(parentElement) {
-		var candy;
-		var snake = new Snake();
-		var view = new CanvasView(parentElement);
-		var inputInterface = new InputInterface(constants.DIRECTION_RIGHT);
-		var canvas = new Canvas(config.canvasWidth, config.canvasHeight);
-
-		var nowPlaying = false;
-		var mainIntervalId;
+		
+		var snake,				// The snake itself
+			candy,				// The candy which the snake eats
+			view,				// The view object which renders the points to screen
+			inputInterface,		// Responsible for handling input from the user
+			canvas,				// The canvas object
+			nowPlaying,			// True if game is currently active, false if paused or ended
+			mainIntervalId;		// The ID of the interval timer
 
 		this.initGame = function(){
+
+			snake = new Snake();
+			view = new CanvasView(parentElement);
+
+			inputInterface = new InputInterface(
+					constants.DIRECTION_RIGHT,
+					this.pauseGame,
+					this.playGame
+			);
+			canvas = new Canvas(config.canvasWidth, config.canvasHeight);
+	
+			nowPlaying = false;
 
 			// Create snake body and assign it to the snake
 			// @todo Make sure it is within canvas, if user changes canvas width/height
 			snake.points = [new Point(17, 15), new Point(16, 15), new Point(15, 15),
-				                 new Point(14, 15), new Point(13, 15), new Point(12, 15),
-				                 new Point(11, 15), new Point(10, 15), new Point(9, 15)];
+				            new Point(14, 15), new Point(13, 15), new Point(12, 15),
+				            new Point(11, 15), new Point(10, 15), new Point(9, 15)];
 
-			candy = randomPoint();
+			candy = randomPoint(canvas);
 
 			view.initPlayField();
 		};
@@ -84,6 +100,11 @@ function SnakeJS(parentElement, config){
 			mainIntervalId = setInterval(nextFrame, config.frameInterval);
 			inputInterface.startListening();
 			nowPlaying = true;
+		};
+
+		this.pauseGame = function(){
+			clearInterval(mainIntervalId);
+			nowPlaying = false;
 		};
 
 		var gameOver = function(){
@@ -97,12 +118,12 @@ function SnakeJS(parentElement, config){
 			nowPlaying = false;
 		};
 
-		this.pauseGame = function(){
-			clearInterval(mainIntervalId);
-			inputInterface.startListening();
-			nowPlaying = false;
-		};
+		/**
+		 * Private methods below
+		 */
 
+		// Renders the next frame based on snake and inputInterface conditions
+		// Returns
 		var nextFrame = function(){
 			if (!moveSnake(snake, inputInterface.getLastDirection())) {
 				gameOver();
@@ -111,17 +132,19 @@ function SnakeJS(parentElement, config){
 			
 			if(candy.collidesWith(snake.points[0])) {
 				snake.fatness += 3;
-				candy = randomPoint();
+				candy = randomPoint(canvas);
 			}
-			// Render
+
+			// Clear the view to make room for a new frame
 			view.clear();
+			// Render the objects to the screen
 			view.renderPoints(snake.points, "snake");
 			view.renderPoints([candy], "candy");
 
 			return true;
 		};
 
-		// Move the snake. Automatically handles self collision and walk through walls
+		// Move the snake. Automatically handles self collision and walking through walls
 		var moveSnake = function(snake, desiredDirection){
 			var head = snake.points[0];
 
@@ -211,7 +234,8 @@ function SnakeJS(parentElement, config){
 			}
 		};
 
-		var randomPoint = function(){
+		// Returns a point object with randomized coordinates within the canvas
+		var randomPoint = function(canvas){
 			var left = utilities.randomInteger(0, canvas.width - 1);
 			var top = utilities.randomInteger(0, canvas.height - 1);
 			var point = new Point(left, top);
@@ -219,7 +243,19 @@ function SnakeJS(parentElement, config){
 		};
 	}
 
-	function InputInterface(initialDirection){
+	/**
+	 * INPUTINTERFACE OBJECT
+	 * 
+	 * Takes input from the user
+	 * 
+	 * @todo Don't take initial direction as an argument.
+	 * 
+	 * @param initialDirection
+	 * @param pause A callback function to be executed when the window is blurred
+	 * @param unpause A callback function which executes when the window is in focus again
+	 * @returns {InputInterface}
+	 */
+	function InputInterface(initialDirection, blurFn, focusFn){
 		// reservedKeys are the keys which should be handled by the game
 		// and not do other stuff, like scrolling up and down.
 		var arrowKeys = [37, 38, 39, 40];
@@ -231,12 +267,16 @@ function SnakeJS(parentElement, config){
 		this.startListening = function(){
 			if (!listening) {
 				window.addEventListener("keydown", handleKeyPress, true);
+				window.addEventListener("blur", blurFn, true);
+				window.addEventListener("focus", focusFn, true);
 				listening = true;
 			}
 		};
 		this.stopListening = function(){
 			if (listening) {
 				window.removeEventListener("keydown", handleKeyPress, true);
+				window.removeEventListener("blur", blurFn, true);
+				window.removeEventListener("focus", focusFn, true);
 				listening = false;
 			}
 		};
@@ -299,8 +339,8 @@ function SnakeJS(parentElement, config){
 			this.playField.setAttribute("id", "snake-js");
 			parentElement.appendChild(this.playField);
 			with (this.playField.style) {
-				width = (config.canvasWidth * constants.CANVAS_POINT_SIZE) + "px";
-				height = (config.canvasHeight * constants.CANVAS_POINT_SIZE) + "px";
+				width = (config.canvasWidth * config.pointSize) + "px";
+				height = (config.canvasHeight * config.pointSize) + "px";
 			}
 		};
 
@@ -315,8 +355,8 @@ function SnakeJS(parentElement, config){
 				$point.className = "point";
 
 				with ($point.style) {
-					left = (points[i].left * constants.CANVAS_POINT_SIZE) + "px";
-					top = (points[i].top * constants.CANVAS_POINT_SIZE) + "px";
+					left = (points[i].left * config.pointSize) + "px";
+					top = (points[i].top * config.pointSize) + "px";
 				}
 
 				pointsParent.appendChild($point);
@@ -341,38 +381,39 @@ function SnakeJS(parentElement, config){
 	 * It uses the HTML5 Canvas element for rendering.
 	 */
 	function CanvasView(parentElement) {
-		var playField;
-		var ctx;
-		var fillStyles = {
+		var playField,			// The DOM <canvas> element
+			ctx,				// The canvas context
+			fillColors = {		// @todo Make an argument of the render functions instead
 				snake : "green",
 				candy : "pink"
-		};
+			};
 
 		this.initPlayField = function(){
 			playField = document.createElement("canvas");
 			playField.setAttribute("id", "snake-js");
-			playField.setAttribute("width", config.canvasWidth * constants.CANVAS_POINT_SIZE);
-			playField.setAttribute("height", config.canvasHeight * constants.CANVAS_POINT_SIZE);
+			playField.setAttribute("width", config.canvasWidth * config.pointSize);
+			playField.setAttribute("height", config.canvasHeight * config.pointSize);
 			parentElement.appendChild(playField);
 			ctx = playField.getContext("2d");
 		};
 
 		this.renderPoints = function(points, name){
 
-			ctx.fillStyle = fillStyles[name];
+			ctx.fillStyle = fillColors[name];
 
 			for (i in points) {
-				var left = points[i].left * constants.CANVAS_POINT_SIZE;
-				var top = points[i].top * constants.CANVAS_POINT_SIZE;
+				var left = points[i].left * config.pointSize;
+				var top = points[i].top * config.pointSize;
 
-				ctx.fillRect(left, top, constants.CANVAS_POINT_SIZE, constants.CANVAS_POINT_SIZE);
+				ctx.fillRect(left, top, config.pointSize, config.pointSize);
 			}
 		};
 
 		this.clear = function() {
 			ctx.fillStyle = "black";
-			ctx.fillRect(0, 0, config.canvasWidth * constants.CANVAS_POINT_SIZE,
-					config.canvasHeight * constants.CANVAS_POINT_SIZE);
+			ctx.fillRect(0, 0,
+					config.canvasWidth * config.pointSize,
+					config.canvasHeight * config.pointSize);
 		};
 	}
 
