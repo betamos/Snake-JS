@@ -8,9 +8,8 @@ To play the game, just open **&lt;examples/snake-js-example.html&gt;** in your f
 
 If you want to include the game on your own site, follow these steps:
 
-First make sure to include **&lt;snake-js.js&gt;** and **&lt;snake-js.css&gt;** in the `<head>` section of the HTML file:
-	
-	<link href="path/to/snake-js.css" rel="stylesheet" />
+First make sure to include **&lt;snake-js.js&gt;** in the `<head>` section of the HTML file:
+
 	<script src="path/to/snake-js.js" type="text/javascript"></script>
 
 Then create an element for the game somewhere in the HTML `<body>` section:  
