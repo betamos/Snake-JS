@@ -68,7 +68,7 @@ function SnakeJS(parentElement, config){
 		
 		var snake,				// The snake itself
 			candy,				// The candy which the snake eats
-			view,				// The view object which renders the points to screen
+			view,				// The view object which draws the points to screen
 			inputInterface,		// Responsible for handling input from the user
 			grid,				// The grid object
 			nowPlaying,			// True if game is currently active, false if paused or ended
@@ -113,7 +113,6 @@ function SnakeJS(parentElement, config){
 
 		var gameOver = function(){
 			quitGame();
-			alert("GAME OVER");
 		};
 
 		var quitGame = this.quitGame = function(){
@@ -131,6 +130,10 @@ function SnakeJS(parentElement, config){
 
 			// Try to move the snake in the desired direction
 			if (!moveSnake(inputInterface.lastDirection())) {
+				// @todo Give the player one frame extra time to move away
+				snake.alive = false;
+				// Draw the dead snake
+				drawCurrentState();
 				gameOver();
 				return false;
 			}
@@ -138,7 +141,10 @@ function SnakeJS(parentElement, config){
 			// If the snake hits a candy
 			if(candy.collidesWith(snake.points[0])) {
 				snake.fatness += 3;
-				candy = randomPoint(grid);
+				// Find a new position for the candy, and make sure it's not inside the snake
+				do {
+					candy = randomPoint(grid);
+				} while(snake.collidesWith(candy));
 			}
 
 			drawCurrentState();
@@ -149,9 +155,9 @@ function SnakeJS(parentElement, config){
 		var drawCurrentState = function() {
 			// Clear the view to make room for a new frame
 			view.clear();
-			// Render the objects to the screen
-			view.renderSnake(snake, config.snakeColor);
-			view.renderCandy(candy, config.candyColor);
+			// Draw the objects to the screen
+			view.drawSnake(snake, config.snakeColor);
+			view.drawCandy(candy, config.candyColor);
 		};
 
 		// Move the snake. Automatically handles self collision and walking through walls
@@ -357,7 +363,7 @@ function SnakeJS(parentElement, config){
 	/**
 	 * VIEW OBJECT
 	 *
-	 * This object is responsible for rendering the objects to the screen.
+	 * This object is responsible for drawing the objects to the screen.
 	 * It uses the HTML5 Canvas element for drawing.
 	 */
 	function View(parentElement, backgroundColor) {
@@ -373,7 +379,7 @@ function SnakeJS(parentElement, config){
 			ctx = playField.getContext("2d");
 		};
 
-		this.renderPoint = function(point, color){
+		this.drawPoint = function(point, color){
 
 			ctx.fillStyle = color || "white";
 
@@ -383,14 +389,14 @@ function SnakeJS(parentElement, config){
 			ctx.fillRect(left, top, config.pointSize, config.pointSize);
 		};
 
-		this.renderPoints = function(points, color){
+		this.drawPoints = function(points, color){
 			for (i in points) {
-				this.renderPoint(points[i], color);
+				this.drawPoint(points[i], color);
 			}
 		};
 
 		// Draw the snake to screen
-		this.renderSnake = function(snake, color){
+		this.drawSnake = function(snake, color){
 
 			// Prepare drawing
 			ctx.strokeStyle = color;
@@ -437,10 +443,10 @@ function SnakeJS(parentElement, config){
 			ctx.stroke();
 
 			// Draw the eye of the snake
-			drawEye(snake.points[0], snake.direction);
+			drawEye(snake, snake.direction);
 		};
 
-		this.renderCandy = function(point, color){
+		this.drawCandy = function(point, color){
 
 			ctx.fillStyle = color || "white";
 
@@ -459,30 +465,61 @@ function SnakeJS(parentElement, config){
 					config.gridHeight * config.pointSize);
 		};
 
-		var drawEye = function(head, direction) {
+		// Draw the eye of the snake
+		var drawEye = function(snake) {
+			var head = snake.points[0];
 			var headPosition = getPointPivotPosition(head);
-			switch (direction){
+
+			// Imagine the snake going from right to left.
+			// These values determine how much to the left and top the eye's pivot point is adjusted.
+			var offsetLeft = length(0.125);
+			var offsetTop = length(0.15);
+
+			// Place the eye's pivot point differentely depending on which direction the snake moves
+			switch (snake.direction){
 			case constants.DIRECTION_LEFT:
-				headPosition.left -= 2;
-				headPosition.top -= 3;
+				headPosition.left -= offsetLeft;
+				headPosition.top -= offsetTop;
 				break;
 			case constants.DIRECTION_RIGHT:
-				headPosition.left += 2;
-				headPosition.top -= 3;
+				headPosition.left += offsetLeft;
+				headPosition.top -= offsetTop;
 				break;
 			case constants.DIRECTION_UP:
-				headPosition.left -= 3;
-				headPosition.top -= 2;
+				headPosition.left -= offsetTop;
+				headPosition.top -= offsetLeft;
 				break;
 			case constants.DIRECTION_DOWN:
-				headPosition.left += 3;
-				headPosition.top += 2;
+				headPosition.left += offsetTop;
+				headPosition.top += offsetLeft;
 				break;
 			}
-			ctx.beginPath();
-			ctx.fillStyle = "#fff";
-			ctx.arc(headPosition.left, headPosition.top, 2, 0, Math.PI*2, true);
-			ctx.fill();
+
+			// If the snake is still alive draw a circle
+			if (snake.alive) {
+				ctx.beginPath();
+				ctx.fillStyle = "#fff";
+				// Draw the circle
+				ctx.arc(headPosition.left, headPosition.top, length(0.125), 0, Math.PI*2, true);
+				// And fill it
+				ctx.fill();
+			}
+			// If the snake is dead, draw a cross
+			else {
+				ctx.beginPath();
+				ctx.strokeStyle = "#fff";
+				ctx.lineWidth = 2;
+				ctx.moveTo(headPosition.left - length(0.1), headPosition.top - length(0.1));
+				ctx.lineTo(headPosition.left + length(0.1), headPosition.top + length(0.1));
+				ctx.moveTo(headPosition.left + length(0.1), headPosition.top - length(0.1));
+				ctx.lineTo(headPosition.left - length(0.1), headPosition.top + length(0.1));
+				ctx.stroke();
+			}
+		};
+
+		// Short name to scale a length relative to config.pointSize
+		var length = function(value){
+			return value * config.pointSize;
 		};
 
 		var getPointPivotPosition = function(point) {
@@ -533,6 +570,7 @@ function SnakeJS(parentElement, config){
 		this.direction = constants.DIRECTION_RIGHT;
 		this.points = [];
 		this.fatness = 0;
+		this.alive = true;
 
 		// Check if any of this objects points collides with an external point
 		// Returns true if any collision occurs, false otherwise
@@ -549,7 +587,7 @@ function SnakeJS(parentElement, config){
 	 * POINT OBJECT
 	 *
 	 * A point has a place in the grid and can be passed
-	 * to View for rendering.
+	 * to View for drawing.
 	 */
 	function Point(left, top) {
 		this.left = left;
