@@ -1,6 +1,6 @@
 Snake JS
 ========
-Snake JS is a **one player simple 2D-game** written *purely in JavaScript* (without any frameworks). It is playable in modern web browsers. It is inspired by [the classical video game Snake][1] which could be played on some Nokia cell phones from the 90's.
+Snake JS is a **one player simple 2D-game** written *purely in JavaScript* (without any frameworks). It is playable in modern web browsers. It is inspired by [the classical video game Snake][1] which could be played on some Nokia cell phones from the 90's. It uses the HTML5 canvas element for rendering.
 
 Instructions
 ------------
@@ -38,9 +38,10 @@ Purpose
 -------
 This purpose of Snake JS is (in this order)
 
-1.	to explore, discuss and practise good OOP design,
-2.	to do this in a simple and naked JavaScript-based environment
-3.	to create a fun game.
+1.	to explore, discuss and practise good OOP design
+	in a simple and naked JavaScript-based environment
+2.	To adapt new web techniques, like the canvas element
+3.	to create an extremely entertaining game.
 
 The purpose is **not** to make the game cross-browser compatible. Hacks and inconsistensies are only applied when absolutely necessary.
 
