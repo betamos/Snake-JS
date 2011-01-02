@@ -21,9 +21,9 @@ function SnakeJS(parentElement, config){
 		canvasHeight : 30,				// Height of the game canvas
 		frameInterval : 100,			// Milliseconds between frames (@todo change to speed?)
 		pointSize : 16,					// Size of one grid point (the snake is almost one grid point thick)
-		backgroundColor : "#f1ecce",	// The color of the background. CSS3 color values
+		backgroundColor : "#f3e698",	// The color of the background. CSS3 color values
 		snakeColor : "#4b4312",			// The color of the snake
-		candyColor : "#c6bc69"			// The color of the candy
+		candyColor : "#b11c1c"			// The color of the candy
 	};
 
 	// Merge user config with default config
@@ -128,7 +128,9 @@ function SnakeJS(parentElement, config){
 		// Renders the next frame based on snake and inputInterface conditions
 		// Returns
 		var nextFrame = function(){
-			if (!moveSnake(snake, inputInterface.lastDirection() || constants.DIRECTION_RIGHT)) {
+			
+			var actualDirection = snake.actualDirection(inputInterface.lastDirection());
+			if (!moveSnake(snake, actualDirection)) {
 				gameOver();
 				return false;
 			}
@@ -142,18 +144,18 @@ function SnakeJS(parentElement, config){
 			// Clear the view to make room for a new frame
 			view.clear();
 			// Render the objects to the screen
-			view.renderSnake(snake.points, config.snakeColor);
-			view.renderPoint(candy, config.candyColor);
+			view.renderSnake(snake.points, actualDirection, config.snakeColor);
+			view.renderCandy(candy, config.candyColor);
 
 			return true;
 		};
 
 		// Move the snake. Automatically handles self collision and walking through walls
-		var moveSnake = function(snake, desiredDirection){
+		var moveSnake = function(snake, direction){
 			var head = snake.points[0];
 
 			// The direction the snake will move in this frame
-			snake.direction = snake.actualDirection(desiredDirection);
+			snake.direction = direction;
 
 			var newHead = movePoint(head, snake.direction);
 
@@ -328,6 +330,7 @@ function SnakeJS(parentElement, config){
 	 *
 	 * This object holds canvas properties and pointers to the objects which are in the
 	 * canvas.
+	 * @todo Chane name to Grid
 	 */
 	function Canvas(width, height) {
 		this.width = width;
@@ -335,10 +338,10 @@ function SnakeJS(parentElement, config){
 	}
 
 	/**
-	 * CANVASVIEW OBJECT
+	 * VIEW OBJECT
 	 *
 	 * This object is responsible for rendering the objects to the screen.
-	 * It uses the HTML5 Canvas element for rendering.
+	 * It uses the HTML5 Canvas element for drawing.
 	 */
 	function View(parentElement, backgroundColor) {
 		var playField,			// The DOM <canvas> element
@@ -369,7 +372,8 @@ function SnakeJS(parentElement, config){
 			}
 		};
 
-		this.renderSnake = function(points, color){
+		// Draw the snake to screen
+		this.renderSnake = function(points, direction, color){
 			ctx.strokeStyle = color;
 			ctx.lineWidth = config.pointSize - 2;
 			ctx.lineJoin = "round";
@@ -410,7 +414,23 @@ function SnakeJS(parentElement, config){
 					}
 				}
 			}
+			// Now draw the snake to screen
 			ctx.stroke();
+
+			// Draw the eye of the snake
+			drawEye(points[0], direction);
+		};
+
+		this.renderCandy = function(point, color){
+
+			ctx.fillStyle = color || "white";
+
+			var position = getPointPivotPosition(point);
+
+			ctx.beginPath();
+			//ctx.moveTo(position.left, position.top);
+			ctx.arc(position.left, position.top, config.pointSize / 3, 0, Math.PI*2, true);
+			ctx.fill();
 		};
 
 		this.clear = function(color) {
@@ -418,6 +438,32 @@ function SnakeJS(parentElement, config){
 			ctx.fillRect(0, 0,
 					config.canvasWidth * config.pointSize,
 					config.canvasHeight * config.pointSize);
+		};
+
+		var drawEye = function(head, direction) {
+			var headPosition = getPointPivotPosition(head);
+			switch (direction){
+			case constants.DIRECTION_LEFT:
+				headPosition.left -= 2;
+				headPosition.top -= 3;
+				break;
+			case constants.DIRECTION_RIGHT:
+				headPosition.left += 2;
+				headPosition.top -= 3;
+				break;
+			case constants.DIRECTION_UP:
+				headPosition.left -= 3;
+				headPosition.top -= 2;
+				break;
+			case constants.DIRECTION_DOWN:
+				headPosition.left += 3;
+				headPosition.top += 2;
+				break;
+			}
+			ctx.beginPath();
+			ctx.fillStyle = "#fff";
+			ctx.arc(headPosition.left, headPosition.top, 2, 0, Math.PI*2, true);
+			ctx.fill();
 		};
 
 		var getPointPivotPosition = function(point) {
@@ -482,6 +528,7 @@ function SnakeJS(parentElement, config){
 		// Get the direction which the snake will go this frame
 		// The desired direction is usually provided by the player
 		this.actualDirection = function(desiredDirection){
+			desiredDirection = desiredDirection || constants.DIRECTION_RIGHT;
 			if (utilities.oppositeDirections(this.direction, desiredDirection)) {
 				// Continue moving in the snake's current direction
 				// ignoring the player
