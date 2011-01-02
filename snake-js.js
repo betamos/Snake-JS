@@ -33,7 +33,8 @@ function SnakeJS(parentElement, config){
 		DIRECTION_UP : 1,
 		DIRECTION_RIGHT : 2,
 		DIRECTION_DOWN : -1,
-		DIRECTION_LEFT : -2
+		DIRECTION_LEFT : -2,
+		DEFAULT_DIRECTION : 2
 	};
 
 	var engine = new Engine(parentElement);
@@ -125,12 +126,11 @@ function SnakeJS(parentElement, config){
 		 * Private methods below
 		 */
 
-		// Renders the next frame based on snake and inputInterface conditions
-		// Returns
+		// Calculates what the next frame will be like and draws it.
 		var nextFrame = function(){
-			
-			var actualDirection = snake.actualDirection(inputInterface.lastDirection());
-			if (!moveSnake(snake, actualDirection)) {
+
+			// Try to move the snake in the desired direction
+			if (!moveSnake(inputInterface.lastDirection())) {
 				gameOver();
 				return false;
 			}
@@ -141,21 +141,25 @@ function SnakeJS(parentElement, config){
 				candy = randomPoint(grid);
 			}
 
-			// Clear the view to make room for a new frame
-			view.clear();
-			// Render the objects to the screen
-			view.renderSnake(snake.points, actualDirection, config.snakeColor);
-			view.renderCandy(candy, config.candyColor);
+			drawCurrentState();
 
 			return true;
 		};
 
+		var drawCurrentState = function() {
+			// Clear the view to make room for a new frame
+			view.clear();
+			// Render the objects to the screen
+			view.renderSnake(snake, config.snakeColor);
+			view.renderCandy(candy, config.candyColor);
+		};
+
 		// Move the snake. Automatically handles self collision and walking through walls
-		var moveSnake = function(snake, direction){
+		var moveSnake = function(desiredDirection){
 			var head = snake.points[0];
 
 			// The direction the snake will move in this frame
-			snake.direction = direction;
+			snake.direction = actualDirection(snake.direction, desiredDirection);
 
 			var newHead = movePoint(head, snake.direction);
 
@@ -175,6 +179,21 @@ function SnakeJS(parentElement, config){
 				snake.points.pop();
 			
 			return true;
+		};
+
+		// Get the direction which the snake will go this frame
+		// The desired direction is usually provided by keyboard input
+		var actualDirection = function(snakeDirection, desiredDirection){
+			desiredDirection = desiredDirection || constants.DEFAULT_DIRECTION;
+			if (utilities.oppositeDirections(snakeDirection, desiredDirection)) {
+				// Continue moving in the snake's current direction
+				// ignoring the player
+				return snakeDirection;
+			}
+			else {
+				// Obey the player and move in that direction
+				return desiredDirection;
+			}
 		};
 
 		// Take a point (oldPoint), "move" it in any direction (direction) and
@@ -371,7 +390,9 @@ function SnakeJS(parentElement, config){
 		};
 
 		// Draw the snake to screen
-		this.renderSnake = function(points, direction, color){
+		this.renderSnake = function(snake, color){
+
+			// Prepare drawing
 			ctx.strokeStyle = color;
 			ctx.lineWidth = config.pointSize - 2;
 			ctx.lineJoin = "round";
@@ -381,10 +402,10 @@ function SnakeJS(parentElement, config){
 			ctx.beginPath();
 			
 			// Loop over the points, beginning with the head
-			for (var i = 0; i < points.length; i++) {
+			for (var i = 0; i < snake.points.length; i++) {
 
 				// Short name for the point we're looking at now
-				var currentPoint = points[i];
+				var currentPoint = snake.points[i];
 
 				// If we're looking at the head
 				if (i === 0) {
@@ -396,7 +417,7 @@ function SnakeJS(parentElement, config){
 				// If we're looking at any other point
 				else {
 					// Short name to the previous point (which we looked at in the last iteration)
-					var prevPoint = points[i-1];
+					var prevPoint = snake.points[i-1];
 
 					// If these points are next to each other (Snake did NOT go through the wall here)
 					if(Math.abs(prevPoint.left - currentPoint.left) <= 1 && Math.abs(prevPoint.top - currentPoint.top) <= 1){
@@ -416,7 +437,7 @@ function SnakeJS(parentElement, config){
 			ctx.stroke();
 
 			// Draw the eye of the snake
-			drawEye(points[0], direction);
+			drawEye(snake.points[0], snake.direction);
 		};
 
 		this.renderCandy = function(point, color){
@@ -521,21 +542,6 @@ function SnakeJS(parentElement, config){
 					return true;
 			}
 			return false;
-		};
-
-		// Get the direction which the snake will go this frame
-		// The desired direction is usually provided by the player
-		this.actualDirection = function(desiredDirection){
-			desiredDirection = desiredDirection || constants.DIRECTION_RIGHT;
-			if (utilities.oppositeDirections(this.direction, desiredDirection)) {
-				// Continue moving in the snake's current direction
-				// ignoring the player
-				return this.direction;
-			}
-			else {
-				// Obey the player and move in that direction
-				return desiredDirection;
-			}
 		};
 	}
 
