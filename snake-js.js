@@ -76,7 +76,6 @@ function SnakeJS(parentElement, config){
 			view = new CanvasView(parentElement);
 
 			inputInterface = new InputInterface(
-					constants.DIRECTION_RIGHT,
 					this.pauseGame,
 					this.playGame
 			);
@@ -125,7 +124,7 @@ function SnakeJS(parentElement, config){
 		// Renders the next frame based on snake and inputInterface conditions
 		// Returns
 		var nextFrame = function(){
-			if (!moveSnake(snake, inputInterface.getLastDirection())) {
+			if (!moveSnake(snake, inputInterface.lastDirection() || constants.DIRECTION_RIGHT)) {
 				gameOver();
 				return false;
 			}
@@ -246,24 +245,28 @@ function SnakeJS(parentElement, config){
 	/**
 	 * INPUTINTERFACE OBJECT
 	 * 
-	 * Takes input from the user
-	 * 
-	 * @todo Don't take initial direction as an argument.
+	 * Takes input from the user, typically key strokes to steer the snake
 	 * 
 	 * @param initialDirection
 	 * @param pause A callback function to be executed when the window is blurred
 	 * @param unpause A callback function which executes when the window is in focus again
 	 * @returns {InputInterface}
 	 */
-	function InputInterface(initialDirection, blurFn, focusFn){
-		// reservedKeys are the keys which should be handled by the game
-		// and not do other stuff, like scrolling up and down.
-		var arrowKeys = [37, 38, 39, 40];
-		var listening = false;
-		var lastDirection = initialDirection;
-		this.getLastDirection = function(){
+	function InputInterface(blurFn, focusFn){
+
+		var arrowKeys = [37, 38, 39, 40],	// Key codes for the arrow keys on a keyboard
+			listening = false;				// Listening right now for key strokes etc?
+			lastDirection = null;			// Corresponds to the last arrow key pressed
+
+		/**
+		 * Public methods below
+		 */
+
+		this.lastDirection = function(){
 			return lastDirection;
 		};
+
+		// Start listening for player events
 		this.startListening = function(){
 			if (!listening) {
 				window.addEventListener("keydown", handleKeyPress, true);
@@ -272,6 +275,8 @@ function SnakeJS(parentElement, config){
 				listening = true;
 			}
 		};
+
+		// Stop listening for events. Typically called at game end
 		this.stopListening = function(){
 			if (listening) {
 				window.removeEventListener("keydown", handleKeyPress, true);
@@ -280,16 +285,18 @@ function SnakeJS(parentElement, config){
 				listening = false;
 			}
 		};
+
+		/**
+		 * Private methods below
+		 */
+
 		var handleKeyPress = function(event){
 			// If the key pushed is an arrow key
 			if (arrowKeys.indexOf(event.keyCode) >= 0) {
 				handleArrowKeyPress(event);
-
-				// @todo Return false doesn't seem to prevent scrolling
-				// with arrow keys. See what can be done
-				return false;
 			}
 		};
+
 		var handleArrowKeyPress = function(event){
 			with (constants) {
 				switch (event.keyCode) {
@@ -307,6 +314,7 @@ function SnakeJS(parentElement, config){
 					break;
 				}
 			}
+			// Arrow keys usually makes the browser window scroll. Prevent this evil behavior
 			event.preventDefault();
 		};
 	}
