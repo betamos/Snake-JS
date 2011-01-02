@@ -17,8 +17,8 @@ function SnakeJS(parentElement, config){
 	var utilities = new Utilities();
 
 	var defaultConfig = {
-		canvasWidth : 40,				// Width of the game canvas
-		canvasHeight : 30,				// Height of the game canvas
+		gridWidth : 40,					// Width of the game grid
+		gridHeight : 30,				// Height of the game grid
 		frameInterval : 100,			// Milliseconds between frames (@todo change to speed?)
 		pointSize : 16,					// Size of one grid point (the snake is almost one grid point thick)
 		backgroundColor : "#f3e698",	// The color of the background. CSS3 color values
@@ -69,7 +69,7 @@ function SnakeJS(parentElement, config){
 			candy,				// The candy which the snake eats
 			view,				// The view object which renders the points to screen
 			inputInterface,		// Responsible for handling input from the user
-			canvas,				// The canvas object
+			grid,				// The grid object
 			nowPlaying,			// True if game is currently active, false if paused or ended
 			mainIntervalId;		// The ID of the interval timer
 
@@ -82,17 +82,17 @@ function SnakeJS(parentElement, config){
 					this.pauseGame,
 					this.playGame
 			);
-			canvas = new Canvas(config.canvasWidth, config.canvasHeight);
+			grid = new Grid(config.gridWidth, config.gridHeight);
 	
 			nowPlaying = false;
 
 			// Create snake body and assign it to the snake
-			// @todo Make sure it is within canvas, if user changes canvas width/height
+			// @todo Make sure it is within grid, if user changes grid width/height
 			snake.points = [new Point(17, 15), new Point(16, 15), new Point(15, 15),
 				            new Point(14, 15), new Point(13, 15), new Point(12, 15),
 				            new Point(11, 15), new Point(10, 15), new Point(9, 15)];
 
-			candy = randomPoint(canvas);
+			candy = randomPoint(grid);
 
 			view.initPlayField();
 		};
@@ -138,7 +138,7 @@ function SnakeJS(parentElement, config){
 			// If the snake hits a candy
 			if(candy.collidesWith(snake.points[0])) {
 				snake.fatness += 3;
-				candy = randomPoint(canvas);
+				candy = randomPoint(grid);
 			}
 
 			// Clear the view to make room for a new frame
@@ -159,8 +159,8 @@ function SnakeJS(parentElement, config){
 
 			var newHead = movePoint(head, snake.direction);
 
-			if (!insideCanvas(newHead, canvas))
-				shiftPointIntoCanvas(newHead, canvas);
+			if (!insideGrid(newHead, grid))
+				shiftPointIntoGrid(newHead, grid);
 
 			if (snake.collidesWith(newHead)) {
 				// Can't move. Collides with itself
@@ -201,15 +201,15 @@ function SnakeJS(parentElement, config){
 			return newPoint;
 		};
 
-		// Shifts the points position so that it it is kept within the canvas
+		// Shifts the points position so that it it is kept within the grid
 		// making it possible to "go thru" walls
-		var shiftPointIntoCanvas = function(point, canvas){
-			point.left = shiftIntoRange(point.left, canvas.width);
-			point.top = shiftIntoRange(point.top, canvas.height);
+		var shiftPointIntoGrid = function(point, grid){
+			point.left = shiftIntoRange(point.left, grid.width);
+			point.top = shiftIntoRange(point.top, grid.height);
 			return point;
 		};
 
-		// Helper function for shiftPointIntoCanvas
+		// Helper function for shiftPointIntoGrid
 		// E.g. if number=23, range=10, returns 3
 		// E.g.2 if nubmer = -1, range=10, returns 9
 		var shiftIntoRange = function(number, range) {
@@ -228,11 +228,11 @@ function SnakeJS(parentElement, config){
 			return shiftedNumber;
 		};
 
-		// Check if a specific point is inside the canvas
+		// Check if a specific point is inside the grid
 		// Returns true if inside, false otherwise
-		var insideCanvas = function(point, canvas){
+		var insideGrid = function(point, grid){
 			if (point.left < 0 || point.top < 0 ||
-					point.left >= canvas.width || point.top >= canvas.height){
+					point.left >= grid.width || point.top >= grid.height){
 				return false;
 			}
 			else {
@@ -240,10 +240,10 @@ function SnakeJS(parentElement, config){
 			}
 		};
 
-		// Returns a point object with randomized coordinates within the canvas
-		var randomPoint = function(canvas){
-			var left = utilities.randomInteger(0, canvas.width - 1);
-			var top = utilities.randomInteger(0, canvas.height - 1);
+		// Returns a point object with randomized coordinates within the grid
+		var randomPoint = function(grid){
+			var left = utilities.randomInteger(0, grid.width - 1);
+			var top = utilities.randomInteger(0, grid.height - 1);
 			var point = new Point(left, top);
 			return point;
 		};
@@ -326,13 +326,11 @@ function SnakeJS(parentElement, config){
 	}
 
 	/**
-	 * CANVAS OBJECT
+	 * GRID OBJECT
 	 *
-	 * This object holds canvas properties and pointers to the objects which are in the
-	 * canvas.
-	 * @todo Chane name to Grid
+	 * This object holds the properties of the grid.
 	 */
-	function Canvas(width, height) {
+	function Grid(width, height) {
 		this.width = width;
 		this.height = height;
 	}
@@ -350,8 +348,8 @@ function SnakeJS(parentElement, config){
 		this.initPlayField = function(){
 			playField = document.createElement("canvas");
 			playField.setAttribute("id", "snake-js");
-			playField.setAttribute("width", config.canvasWidth * config.pointSize);
-			playField.setAttribute("height", config.canvasHeight * config.pointSize);
+			playField.setAttribute("width", config.gridWidth * config.pointSize);
+			playField.setAttribute("height", config.gridHeight * config.pointSize);
 			parentElement.appendChild(playField);
 			ctx = playField.getContext("2d");
 		};
@@ -436,8 +434,8 @@ function SnakeJS(parentElement, config){
 		this.clear = function(color) {
 			ctx.fillStyle = color || backgroundColor;
 			ctx.fillRect(0, 0,
-					config.canvasWidth * config.pointSize,
-					config.canvasHeight * config.pointSize);
+					config.gridWidth * config.pointSize,
+					config.gridHeight * config.pointSize);
 		};
 
 		var drawEye = function(head, direction) {
@@ -487,7 +485,7 @@ function SnakeJS(parentElement, config){
 			var topOffset = utilities.sign(p2.top - p1.top);
 
 			// First let's look at p1
-			// Create a fake end point outside the canvas, next to p1
+			// Create a fake end point outside the grid, next to p1
 			var fakeEndPoint = new Point(p1.left - leftOffset, p1.top - topOffset);
 			// And get the screen position
 			var fakeEndPointPosition = getPointPivotPosition(fakeEndPoint);
@@ -544,8 +542,8 @@ function SnakeJS(parentElement, config){
 	/**
 	 * POINT OBJECT
 	 *
-	 * A point has a place in the canvas coordinate system and can be passed
-	 * to Canvas for rendering.
+	 * A point has a place in the grid and can be passed
+	 * to View for rendering.
 	 */
 	function Point(left, top) {
 		this.left = left;
