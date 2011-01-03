@@ -23,12 +23,11 @@ Since you need access to the DOM-tree you may want to create an event triggered 
 	document.addEventListener("DOMContentLoaded", function() {
 		var parentElement = document.getElementById("parent");
 		var game = new SnakeJS(parentElement);
-		game.play();
 	}, true);
 	
 	</script>
 
-In this function, first retrieve the **parent element** (this is where the game will be rendered) as a **DOM element**. Then create the `SnakeJS` object and pass the parent element to the constructor. Finally, play the game by calling the `play` method.
+In this function, first retrieve the **parent element** (this is where the game will be rendered) as a **DOM element**. Then create the `SnakeJS` object and pass the parent element to the constructor.
 
 Check the **example directory** for sample implementations of the game. It also contains some information about changing game settings and how to use Snake JS properly with jQuery.
 

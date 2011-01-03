@@ -14,18 +14,14 @@ document.addEventListener("DOMContentLoaded", function(){
 	var parentElement = document.getElementById("parent");
 
 	// User defined settings overrides default settings.
-	// See snake.js for all available options.
+	// See snake-js.js for all available options.
 	var settings = {
-		gridHeight : 20,
-		gridWidth : 30
+		    frameInterval : 100
 	};
 
 	// Create the game object. The settings object is NOT required.
 	// The parentElement however is required
 	var game = new SnakeJS(parentElement, settings);
-
-	// Start playing
-	game.play();
 
 }, true);
 

@@ -17,9 +17,10 @@ function SnakeJS(parentElement, config){
 	var utilities = new Utilities();
 
 	var defaultConfig = {
-		gridWidth : 40,					// Width of the game grid
-		gridHeight : 30,				// Height of the game grid
-		frameInterval : 100,			// Milliseconds between frames (@todo change to speed?)
+		autoInit : true,				// Game inits automagically. If false, one must call .init() manually
+		gridWidth : 30,					// Width of the game grid
+		gridHeight : 20,				// Height of the game grid
+		frameInterval : 150,			// Milliseconds between frames (@todo change to speed?)
 		pointSize : 16,					// Size of one grid point (the snake is almost one grid point thick)
 		backgroundColor : "#f3e698",	// The color of the background. CSS3 color values
 		snakeColor : "#4b4312",			// The color of the snake
@@ -34,29 +35,28 @@ function SnakeJS(parentElement, config){
 		DIRECTION_RIGHT : 2,
 		DIRECTION_DOWN : -1,
 		DIRECTION_LEFT : -2,
-		DEFAULT_DIRECTION : 2
+		DEFAULT_DIRECTION : 2,
+		STATE_INACTIVE : 1,
+		STATE_PAUSED : 2,
+		STATE_PLAYING : 3,
+		STATE_GAME_OVER : 4
 	};
 
 	var engine = new Engine(parentElement);
 
 	/**
-	 * These methods below (play, quit, pause, unpause) are publically accessible.
+	 * These methods below (init, pause, resume) are publically accessible.
 	 */
-	this.play = function(){
+	this.init = function(){
 		engine.initGame();
-		engine.playGame();
-	};
-
-	this.quit = function(){
-		engine.quitGame();
 	};
 
 	this.pause = function(){
 		engine.pauseGame();
 	};
 
-	this.unpause = function(){
-		engine.playGame();
+	this.resume = function(){
+		engine.resume();
 	};
 
 	/**
@@ -71,21 +71,18 @@ function SnakeJS(parentElement, config){
 			view,				// The view object which draws the points to screen
 			inputInterface,		// Responsible for handling input from the user
 			grid,				// The grid object
-			nowPlaying,			// True if game is currently active, false if paused or ended
+			currentState,		// Possible values are found in constants.STATE_*
 			mainIntervalId;		// The ID of the interval timer
 
 		this.initGame = function(){
 
+			currentState = constants.STATE_INACTIVE;
+
 			snake = new Snake();
 			view = new View(parentElement, config.backgroundColor);
 
-			inputInterface = new InputInterface(
-					this.pauseGame,
-					this.playGame
-			);
+			inputInterface = new InputInterface(this.pauseGame, this.resumeGame, startMoving);
 			grid = new Grid(config.gridWidth, config.gridHeight);
-	
-			nowPlaying = false;
 
 			// Create snake body
 			snake.points.push(randomPoint(grid));
@@ -94,34 +91,40 @@ function SnakeJS(parentElement, config){
 			candy = randomPoint(grid);
 
 			view.initPlayField();
-		};
-
-		this.playGame = function(){
-			nextFrame();
-			if (!nowPlaying)
-				mainIntervalId = setInterval(nextFrame, config.frameInterval);
+			drawCurrentObjects();
 			inputInterface.startListening();
-			nowPlaying = true;
 		};
 
 		this.pauseGame = function(){
-			clearInterval(mainIntervalId);
-			nowPlaying = false;
+			if (currentState === constants.STATE_PLAYING) {
+				clearInterval(mainIntervalId);
+				currentState = constants.STATE_PAUSED;
+			}
+		};
+
+		this.resumeGame = function(){
+			if (currentState === constants.STATE_PAUSED) {
+				mainIntervalId = setInterval(nextFrame, config.frameInterval);
+				currentState = constants.STATE_PLAYING;
+			}
 		};
 
 		var gameOver = function(){
-			quitGame();
-		};
-
-		var quitGame = this.quitGame = function(){
+			currentState = constants.STATE_GAME_OVER;
 			clearInterval(mainIntervalId);
 			inputInterface.stopListening();
-			nowPlaying = false;
 		};
 
 		/**
 		 * Private methods below
 		 */
+
+		var startMoving = function(){
+			if (currentState === constants.STATE_INACTIVE) {
+				mainIntervalId = setInterval(nextFrame, config.frameInterval);
+				currentState = constants.STATE_PLAYING;
+			}
+		};
 
 		// Calculates what the next frame will be like and draws it.
 		var nextFrame = function(){
@@ -131,7 +134,7 @@ function SnakeJS(parentElement, config){
 				// @todo Give the player one frame extra time to move away
 				snake.alive = false;
 				// Draw the dead snake
-				drawCurrentState();
+				drawCurrentObjects();
 				gameOver();
 				return false;
 			}
@@ -145,12 +148,12 @@ function SnakeJS(parentElement, config){
 				} while(snake.collidesWith(candy));
 			}
 
-			drawCurrentState();
+			drawCurrentObjects();
 
 			return true;
 		};
 
-		var drawCurrentState = function() {
+		var drawCurrentObjects = function() {
 			// Clear the view to make room for a new frame
 			view.clear();
 			// Draw the objects to the screen
@@ -163,7 +166,7 @@ function SnakeJS(parentElement, config){
 			var head = snake.points[0];
 
 			// The direction the snake will move in this frame
-			snake.direction = actualDirection(snake.direction, desiredDirection);
+			snake.direction = actualDirection(desiredDirection || constants.DEFAULT_DIRECTION);
 
 			var newHead = movePoint(head, snake.direction);
 
@@ -187,12 +190,13 @@ function SnakeJS(parentElement, config){
 
 		// Get the direction which the snake will go this frame
 		// The desired direction is usually provided by keyboard input
-		var actualDirection = function(snakeDirection, desiredDirection){
-			desiredDirection = desiredDirection || constants.DEFAULT_DIRECTION;
-			if (utilities.oppositeDirections(snakeDirection, desiredDirection)) {
+		var actualDirection = function(desiredDirection){
+			if (snake.points.length === 1)
+				return desiredDirection;
+			else if (utilities.oppositeDirections(snake.direction, desiredDirection)) {
 				// Continue moving in the snake's current direction
 				// ignoring the player
-				return snakeDirection;
+				return snake.direction;
 			}
 			else {
 				// Obey the player and move in that direction
@@ -275,17 +279,18 @@ function SnakeJS(parentElement, config){
 	/**
 	 * INPUTINTERFACE OBJECT
 	 * 
-	 * Takes input from the user, typically key strokes to steer the snake
+	 * Takes input from the user, typically key strokes to steer the snake but also window events
 	 * 
-	 * @param pause A callback function to be executed when the window is blurred
-	 * @param unpause A callback function which executes when the window is in focus again
-	 * @returns {InputInterface}
+	 * @param pauseFn A callback function to be executed when the window is blurred
+	 * @param resumeFn A callback function which executes when the window is in focus again
+	 * @param autoPlayFn A callback function which executes when any arrow key is pressed
 	 */
-	function InputInterface(blurFn, focusFn){
+	function InputInterface(pauseFn, resumeFn, autoPlayFn){
 
 		var arrowKeys = [37, 38, 39, 40],	// Key codes for the arrow keys on a keyboard
-			listening = false;				// Listening right now for key strokes etc?
-			lastDirection = null;			// Corresponds to the last arrow key pressed
+			listening = false,				// Listening right now for key strokes etc?
+			lastDirection = null,			// Corresponds to the last arrow key pressed
+			autoPlay = true;				// Is true if arrows should trigger auto play
 
 		/**
 		 * Public methods below
@@ -299,8 +304,8 @@ function SnakeJS(parentElement, config){
 		this.startListening = function(){
 			if (!listening) {
 				window.addEventListener("keydown", handleKeyPress, true);
-				window.addEventListener("blur", blurFn, true);
-				window.addEventListener("focus", focusFn, true);
+				window.addEventListener("blur", pauseFn, true);
+				window.addEventListener("focus", resumeFn, true);
 				listening = true;
 			}
 		};
@@ -309,8 +314,8 @@ function SnakeJS(parentElement, config){
 		this.stopListening = function(){
 			if (listening) {
 				window.removeEventListener("keydown", handleKeyPress, true);
-				window.removeEventListener("blur", blurFn, true);
-				window.removeEventListener("focus", focusFn, true);
+				window.removeEventListener("blur", pauseFn, true);
+				window.removeEventListener("focus", resumeFn, true);
 				listening = false;
 			}
 		};
@@ -320,7 +325,7 @@ function SnakeJS(parentElement, config){
 		 */
 
 		var handleKeyPress = function(event){
-			// If the key pushed is an arrow key
+			// If the key pressed is an arrow key
 			if (arrowKeys.indexOf(event.keyCode) >= 0) {
 				handleArrowKeyPress(event);
 			}
@@ -345,6 +350,10 @@ function SnakeJS(parentElement, config){
 			}
 			// Arrow keys usually makes the browser window scroll. Prevent this evil behavior
 			event.preventDefault();
+			if (autoPlay) {
+				autoPlayFn();
+				autoPlay = false;
+			}
 		};
 	}
 
@@ -366,9 +375,12 @@ function SnakeJS(parentElement, config){
 	 */
 	function View(parentElement, backgroundColor) {
 		var playField,			// The DOM <canvas> element
-			ctx;				// The canvas context
+			ctx,				// The canvas context
+			snakeThickness;		// The thickness of the snake in pixels
 
 		this.initPlayField = function(){
+			snakeThickness = length(0.9);
+
 			playField = document.createElement("canvas");
 			playField.setAttribute("id", "snake-js");
 			playField.setAttribute("width", config.gridWidth * config.pointSize);
@@ -396,49 +408,60 @@ function SnakeJS(parentElement, config){
 		// Draw the snake to screen
 		this.drawSnake = function(snake, color){
 
-			// Prepare drawing
-			ctx.strokeStyle = color;
-			ctx.lineWidth = config.pointSize - 2;
-			ctx.lineJoin = "round";
-			ctx.lineCap = "round";
-			
-			// Bein path drawing.
-			ctx.beginPath();
-			
-			// Loop over the points, beginning with the head
-			for (var i = 0; i < snake.points.length; i++) {
+			// If there is only one point
+			if (snake.points.length === 1) {
+				var position = getPointPivotPosition(snake.points[0]);
 
-				// Short name for the point we're looking at now
-				var currentPoint = snake.points[i];
-
-				// If we're looking at the head
-				if (i === 0) {
-					// The position of this point in screen pixels
-					var currentPointPosition = getPointPivotPosition(currentPoint);
-					// Don't draw anything, just move the "pencil" to the position of the head
-					ctx.moveTo(currentPointPosition.left, currentPointPosition.top);
-				}
-				// If we're looking at any other point
-				else {
-					// Short name to the previous point (which we looked at in the last iteration)
-					var prevPoint = snake.points[i-1];
-
-					// If these points are next to each other (Snake did NOT go through the wall here)
-					if(Math.abs(prevPoint.left - currentPoint.left) <= 1 && Math.abs(prevPoint.top - currentPoint.top) <= 1){
+				ctx.fillStyle = color;
+				ctx.beginPath();
+				ctx.arc(position.left, position.top, snakeThickness/2, 0, 2*Math.PI, true);
+				ctx.fill();
+			}
+			else {
+				// Prepare drawing
+				ctx.strokeStyle = color;
+				ctx.lineWidth = snakeThickness;
+				ctx.lineJoin = "round";
+				ctx.lineCap = "round";
+				
+				// Bein path drawing.
+				ctx.beginPath();
+				
+				// Loop over the points, beginning with the head
+				for (var i = 0; i < snake.points.length; i++) {
+	
+					// Short name for the point we're looking at now
+					var currentPoint = snake.points[i];
+	
+					// If we're looking at the head
+					if (i === 0) {
 						// The position of this point in screen pixels
 						var currentPointPosition = getPointPivotPosition(currentPoint);
-						// Draw pencil from the position of the "pencil" to this point
-						ctx.lineTo(currentPointPosition.left, currentPointPosition.top);
+						// Don't draw anything, just move the "pencil" to the position of the head
+						ctx.moveTo(currentPointPosition.left, currentPointPosition.top);
 					}
-					// If these points are far away from each other (Snake went through wall here)
+					// If we're looking at any other point
 					else {
-						// Connect these points together. This method will simulate wall entrance/exit if necessary
-						connectWallPoints(prevPoint, currentPoint);
+						// Short name to the previous point (which we looked at in the last iteration)
+						var prevPoint = snake.points[i-1];
+	
+						// If these points are next to each other (Snake did NOT go through the wall here)
+						if(Math.abs(prevPoint.left - currentPoint.left) <= 1 && Math.abs(prevPoint.top - currentPoint.top) <= 1){
+							// The position of this point in screen pixels
+							var currentPointPosition = getPointPivotPosition(currentPoint);
+							// Draw pencil from the position of the "pencil" to this point
+							ctx.lineTo(currentPointPosition.left, currentPointPosition.top);
+						}
+						// If these points are far away from each other (Snake went through wall here)
+						else {
+							// Connect these points together. This method will simulate wall entrance/exit if necessary
+							connectWallPoints(prevPoint, currentPoint);
+						}
 					}
 				}
+				// Now draw the snake to screen
+				ctx.stroke();
 			}
-			// Now draw the snake to screen
-			ctx.stroke();
 
 			// Draw the eye of the snake
 			drawEye(snake, snake.direction);
@@ -652,5 +675,9 @@ function SnakeJS(parentElement, config){
 			var randomNumber = min + Math.floor(Math.random() * (max + 1));
 			return randomNumber;
 		};
+	}
+
+	if (config.autoInit) {
+		this.init();
 	}
 };
