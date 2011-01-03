@@ -40,7 +40,9 @@ function SnakeJS(parentElement, config){
 		STATE_PAUSED : 2,
 		STATE_PLAYING : 3,
 		STATE_GAME_OVER : 4,
-		INITIAL_SNAKE_FATNESS : 6
+		INITIAL_SNAKE_FATNESS : 6,
+		CANDY_SCORE : 10,
+		SCOREBOARD_HEIGHT : 20
 	};
 
 	var engine = new Engine(parentElement);
@@ -73,15 +75,19 @@ function SnakeJS(parentElement, config){
 			inputInterface,		// Responsible for handling input from the user
 			grid,				// The grid object
 			currentState,		// Possible values are found in constants.STATE_*
-			mainIntervalId;		// The ID of the interval timer
+			mainIntervalId,		// The ID of the interval timer
+			score,				// Player score
+			highScore;			// Player highscore
 
 		this.initGame = function(){
 
-			snake = new Snake();
 			view = new View(parentElement, config.backgroundColor);
-
 			inputInterface = new InputInterface(this.pauseGame, this.resumeGame, startMoving);
+
+			snake = new Snake();
 			grid = new Grid(config.gridWidth, config.gridHeight);
+			score = 0;
+			highscore = score;
 
 			// Create snake body
 			snake.points.push(randomPoint(grid));
@@ -130,6 +136,7 @@ function SnakeJS(parentElement, config){
 			};
 			
 			var resurrect = function (){
+				score = 0;
 				snake.fatness = constants.INITIAL_SNAKE_FATNESS;
 				snake.alive = true;
 				drawCurrentScene();
@@ -161,6 +168,8 @@ function SnakeJS(parentElement, config){
 
 			// If the snake hits a candy
 			if(candy.collidesWith(snake.points[0])) {
+				score += constants.CANDY_SCORE;
+				highscore = Math.max(score, highscore);
 				snake.fatness += 3;
 				// Find a new position for the candy, and make sure it's not inside the snake
 				do {
@@ -179,6 +188,7 @@ function SnakeJS(parentElement, config){
 			// Draw the objects to the screen
 			view.drawSnake(snake, config.snakeColor);
 			view.drawCandy(candy, config.candyColor);
+			view.drawScore(score, highscore);
 		};
 
 		// Move the snake. Automatically handles self collision and walking through walls
@@ -404,9 +414,12 @@ function SnakeJS(parentElement, config){
 			playField = document.createElement("canvas");
 			playField.setAttribute("id", "snake-js");
 			playField.setAttribute("width", config.gridWidth * config.pointSize);
-			playField.setAttribute("height", config.gridHeight * config.pointSize);
+			playField.setAttribute("height", config.gridHeight * config.pointSize + constants.SCOREBOARD_HEIGHT);
 			parentElement.appendChild(playField);
 			ctx = playField.getContext("2d");
+			// Translate the coordinates so that we don't need to care about the scoreboard
+			// when we draw all the other stuff
+			ctx.translate(0, constants.SCOREBOARD_HEIGHT);
 		};
 
 		this.drawPoint = function(point, color){
@@ -504,6 +517,33 @@ function SnakeJS(parentElement, config){
 			ctx.fillRect(0, 0,
 					config.gridWidth * config.pointSize,
 					config.gridHeight * config.pointSize);
+		};
+
+		this.drawScore = function(score, highscore){
+			// Translate to 0, 0 to draw from origo
+			ctx.translate(0, -1 * constants.SCOREBOARD_HEIGHT);
+
+			var bottomMargin = 5;
+			var horizontalMargin = 4;
+
+			// Draw the score board
+			ctx.fillStyle = "#c6bc69";
+			ctx.fillRect(0, 0, config.gridWidth * config.pointSize, constants.SCOREBOARD_HEIGHT);
+
+			// Prepare drawing text
+			ctx.fillStyle = config.snakeColor;
+			ctx.font = "bold 16px 'Courier new', monospace";
+
+			// Draw score to the upper right corner
+			ctx.textAlign = "right";
+			ctx.fillText(score, config.gridWidth * config.pointSize - horizontalMargin, constants.SCOREBOARD_HEIGHT - bottomMargin);
+
+			// Draw high score to the upper left corner
+			ctx.textAlign = "left";
+			ctx.fillText(highscore, horizontalMargin, constants.SCOREBOARD_HEIGHT - bottomMargin);
+
+			// Translate back
+			ctx.translate(0, constants.SCOREBOARD_HEIGHT);
 		};
 
 		// Draw the eye of the snake
