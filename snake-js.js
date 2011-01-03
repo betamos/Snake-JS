@@ -36,10 +36,11 @@ function SnakeJS(parentElement, config){
 		DIRECTION_DOWN : -1,
 		DIRECTION_LEFT : -2,
 		DEFAULT_DIRECTION : 2,
-		STATE_INACTIVE : 1,
+		STATE_READY : 1,
 		STATE_PAUSED : 2,
 		STATE_PLAYING : 3,
-		STATE_GAME_OVER : 4
+		STATE_GAME_OVER : 4,
+		INITIAL_SNAKE_FATNESS : 6
 	};
 
 	var engine = new Engine(parentElement);
@@ -76,8 +77,6 @@ function SnakeJS(parentElement, config){
 
 		this.initGame = function(){
 
-			currentState = constants.STATE_INACTIVE;
-
 			snake = new Snake();
 			view = new View(parentElement, config.backgroundColor);
 
@@ -86,13 +85,14 @@ function SnakeJS(parentElement, config){
 
 			// Create snake body
 			snake.points.push(randomPoint(grid));
-			snake.fatness = 6;
+			snake.fatness = constants.INITIAL_SNAKE_FATNESS;
 
 			candy = randomPoint(grid);
 
 			view.initPlayField();
-			drawCurrentObjects();
+			drawCurrentScene();
 			inputInterface.startListening();
+			currentState = constants.STATE_READY;
 		};
 
 		this.pauseGame = function(){
@@ -109,18 +109,38 @@ function SnakeJS(parentElement, config){
 			}
 		};
 
-		var gameOver = function(){
-			currentState = constants.STATE_GAME_OVER;
-			clearInterval(mainIntervalId);
-			inputInterface.stopListening();
-		};
-
 		/**
 		 * Private methods below
 		 */
 
+		// Play a game over scene and restart the game
+		var gameOver = function(){
+			currentState = constants.STATE_GAME_OVER;
+			clearInterval(mainIntervalId);
+
+			// Remove one point from the snakes tail and recurse with a timeout
+			var removeTail = function(){
+				if (snake.points.length > 1) {
+					snake.points.pop();
+					drawCurrentScene();
+					setTimeout(removeTail, config.frameInterval);
+				}
+				else
+					setTimeout(resurrect, config.frameInterval * 30);
+			};
+			
+			var resurrect = function (){
+				snake.fatness = constants.INITIAL_SNAKE_FATNESS;
+				snake.alive = true;
+				drawCurrentScene();
+				currentState = constants.STATE_READY;
+			};
+
+			setTimeout(removeTail, config.frameInterval * 10);
+		};
+
 		var startMoving = function(){
-			if (currentState === constants.STATE_INACTIVE) {
+			if (currentState === constants.STATE_READY) {
 				mainIntervalId = setInterval(nextFrame, config.frameInterval);
 				currentState = constants.STATE_PLAYING;
 			}
@@ -134,7 +154,7 @@ function SnakeJS(parentElement, config){
 				// @todo Give the player one frame extra time to move away
 				snake.alive = false;
 				// Draw the dead snake
-				drawCurrentObjects();
+				drawCurrentScene();
 				gameOver();
 				return false;
 			}
@@ -148,12 +168,12 @@ function SnakeJS(parentElement, config){
 				} while(snake.collidesWith(candy));
 			}
 
-			drawCurrentObjects();
+			drawCurrentScene();
 
 			return true;
 		};
 
-		var drawCurrentObjects = function() {
+		var drawCurrentScene = function() {
 			// Clear the view to make room for a new frame
 			view.clear();
 			// Draw the objects to the screen
@@ -274,6 +294,9 @@ function SnakeJS(parentElement, config){
 			var point = new Point(left, top);
 			return point;
 		};
+
+		var gameOverScene = function(){
+		};
 	}
 
 	/**
@@ -289,8 +312,7 @@ function SnakeJS(parentElement, config){
 
 		var arrowKeys = [37, 38, 39, 40],	// Key codes for the arrow keys on a keyboard
 			listening = false,				// Listening right now for key strokes etc?
-			lastDirection = null,			// Corresponds to the last arrow key pressed
-			autoPlay = true;				// Is true if arrows should trigger auto play
+			lastDirection = null;			// Corresponds to the last arrow key pressed
 
 		/**
 		 * Public methods below
@@ -350,10 +372,8 @@ function SnakeJS(parentElement, config){
 			}
 			// Arrow keys usually makes the browser window scroll. Prevent this evil behavior
 			event.preventDefault();
-			if (autoPlay) {
-				autoPlayFn();
-				autoPlay = false;
-			}
+			// Call the auto play function
+			autoPlayFn();
 		};
 	}
 
