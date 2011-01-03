@@ -87,11 +87,9 @@ function SnakeJS(parentElement, config){
 	
 			nowPlaying = false;
 
-			// Create snake body and assign it to the snake
-			// @todo Make sure it is within grid, if user changes grid width/height
-			snake.points = [new Point(17, 15), new Point(16, 15), new Point(15, 15),
-				            new Point(14, 15), new Point(13, 15), new Point(12, 15),
-				            new Point(11, 15), new Point(10, 15), new Point(9, 15)];
+			// Create snake body
+			snake.points.push(randomPoint(grid));
+			snake.fatness = 6;
 
 			candy = randomPoint(grid);
 
@@ -567,7 +565,7 @@ function SnakeJS(parentElement, config){
 	 * The snake itself...
 	 */
 	function Snake() {
-		this.direction = constants.DIRECTION_RIGHT;
+		this.direction = constants.DEFAULT_DIRECTION;
 		this.points = [];
 		this.fatness = 0;
 		this.alive = true;
