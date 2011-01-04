@@ -435,22 +435,6 @@ function SnakeJS(parentElement, config){
 			ctx.translate(0, constants.SCOREBOARD_HEIGHT);
 		};
 
-		this.drawPoint = function(point, color){
-
-			ctx.fillStyle = color || "white";
-
-			var left = point.left * config.pointSize;
-			var top = point.top * config.pointSize;
-
-			ctx.fillRect(left, top, config.pointSize, config.pointSize);
-		};
-
-		this.drawPoints = function(points, color){
-			for (i in points) {
-				this.drawPoint(points[i], color);
-			}
-		};
-
 		// Draw the snake to screen
 		this.drawSnake = function(snake, color){
 
