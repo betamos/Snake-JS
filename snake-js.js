@@ -218,7 +218,7 @@ function SnakeJS(parentElement, config){
 			if (!insideGrid(newHead, grid))
 				shiftPointIntoGrid(newHead, grid);
 
-			if (snake.collidesWith(newHead)) {
+			if (snake.collidesWith(newHead, true)) {
 				// Can't move. Collides with itself
 				return false;
 			}
@@ -345,8 +345,16 @@ function SnakeJS(parentElement, config){
 
 		// Check if any of this objects points collides with an external point
 		// Returns true if any collision occurs, false otherwise
-		this.collidesWith = function(point){
-			for (i in this.points) {
+		// @param simulateMovement boolean Simulates the removal of the end point
+		// This addresses a bug where the snake couldn't move to a point which
+		// is not currently free, but will be in the next frame
+		this.collidesWith = function(point, simulateMovement){
+			if (simulateMovement && this.growthLeft === 0)
+				// Now th
+				range = this.points.length - 1;
+			else
+				range = this.points.length;
+			for (var i = 0; i < range; i++) {
 				if (point.collidesWith(this.points[i]))
 					return true;
 			}
