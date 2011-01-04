@@ -22,9 +22,12 @@ function SnakeJS(parentElement, config){
 		gridHeight : 20,				// Height of the game grid
 		frameInterval : 150,			// Milliseconds between frames (@todo change to speed?)
 		pointSize : 16,					// Size of one grid point (the snake is almost one grid point thick)
-		backgroundColor : "#f3e698",	// The color of the background. CSS3 color values
-		snakeColor : "#4b4312",			// The color of the snake
-		candyColor : "#b11c1c",			// The color of the candy
+		backgroundColor : "#f3e698",	// Color of the background. CSS3 color values
+		snakeColor : "#4b4312",			// Color of the snake
+		snakeEyeColor : "white",		// Color of the snake's eye
+		candyColor : "#b11c1c",			// Color of the candy
+		scoreBoardColor : "#c6bc69",	// Color of the score board
+		scoreTextColor : "#4b4312",		// Color of score numbers on the score board
 		collisionTolerance : 1			// How many frames will the user get to change direction upon collision
 	};
 
@@ -537,11 +540,11 @@ function SnakeJS(parentElement, config){
 			var horizontalMargin = 4;
 
 			// Draw the score board
-			ctx.fillStyle = "#c6bc69";
+			ctx.fillStyle = config.scoreBoardColor;
 			ctx.fillRect(0, 0, config.gridWidth * config.pointSize, constants.SCOREBOARD_HEIGHT);
 
 			// Prepare drawing text
-			ctx.fillStyle = config.snakeColor;
+			ctx.fillStyle = config.scoreTextColor;
 			ctx.font = "bold 16px 'Courier new', monospace";
 
 			// Draw score to the upper right corner
@@ -589,7 +592,7 @@ function SnakeJS(parentElement, config){
 			// If the snake is still alive draw a circle
 			if (snake.alive) {
 				ctx.beginPath();
-				ctx.fillStyle = "#fff";
+				ctx.fillStyle = config.snakeEyeColor;
 				// Draw the circle
 				ctx.arc(headPosition.left, headPosition.top, length(0.125), 0, Math.PI*2, false);
 				// And fill it
@@ -598,7 +601,7 @@ function SnakeJS(parentElement, config){
 			// If the snake is dead, draw a cross
 			else {
 				ctx.beginPath();
-				ctx.strokeStyle = "#fff";
+				ctx.strokeStyle = config.snakeEyeColor;
 				ctx.lineWidth = 2;
 				ctx.moveTo(headPosition.left - length(0.1), headPosition.top - length(0.1));
 				ctx.lineTo(headPosition.left + length(0.1), headPosition.top + length(0.1));
