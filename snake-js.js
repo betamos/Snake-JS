@@ -41,8 +41,9 @@ function SnakeJS(parentElement, config){
 		STATE_PLAYING : 3,
 		STATE_GAME_OVER : 4,
 		INITIAL_SNAKE_FATNESS : 6,
-		CANDY_SCORE : 10,
-		SCOREBOARD_HEIGHT : 20
+		SCOREBOARD_HEIGHT : 20,
+		CANDY_REGULAR : 1,
+		CANDY_MASSIVE : 2
 	};
 
 	var engine = new Engine(parentElement);
@@ -93,7 +94,7 @@ function SnakeJS(parentElement, config){
 			snake.points.push(randomPoint(grid));
 			snake.fatness = constants.INITIAL_SNAKE_FATNESS;
 
-			candy = randomPoint(grid);
+			candy = new Candy(randomPoint(grid), constants.CANDY_REGULAR);
 
 			view.initPlayField();
 			drawCurrentScene();
@@ -129,10 +130,10 @@ function SnakeJS(parentElement, config){
 				if (snake.points.length > 1) {
 					snake.points.pop();
 					drawCurrentScene();
-					setTimeout(removeTail, config.frameInterval);
+					setTimeout(removeTail, config.frameInterval/4);
 				}
 				else
-					setTimeout(resurrect, config.frameInterval * 30);
+					setTimeout(resurrect, config.frameInterval * 10);
 			};
 			
 			var resurrect = function (){
@@ -167,14 +168,14 @@ function SnakeJS(parentElement, config){
 			}
 
 			// If the snake hits a candy
-			if(candy.collidesWith(snake.points[0])) {
-				score += constants.CANDY_SCORE;
+			if(candy.point.collidesWith(snake.points[0])) {
+				score += candy.fatness;
 				highscore = Math.max(score, highscore);
 				snake.fatness += 3;
 				// Find a new position for the candy, and make sure it's not inside the snake
 				do {
-					candy = randomPoint(grid);
-				} while(snake.collidesWith(candy));
+					candy = new Candy(randomPoint(grid), constants.CANDY_REGULAR);
+				} while(snake.collidesWith(candy.point));
 			}
 
 			drawCurrentScene();
@@ -187,7 +188,7 @@ function SnakeJS(parentElement, config){
 			view.clear();
 			// Draw the objects to the screen
 			view.drawSnake(snake, config.snakeColor);
-			view.drawCandy(candy, config.candyColor);
+			view.drawCandy(candy);
 			view.drawScore(score, highscore);
 		};
 
@@ -303,9 +304,6 @@ function SnakeJS(parentElement, config){
 			var top = utilities.randomInteger(0, grid.height - 1);
 			var point = new Point(left, top);
 			return point;
-		};
-
-		var gameOverScene = function(){
 		};
 	}
 
@@ -447,7 +445,7 @@ function SnakeJS(parentElement, config){
 
 				ctx.fillStyle = color;
 				ctx.beginPath();
-				ctx.arc(position.left, position.top, snakeThickness/2, 0, 2*Math.PI, true);
+				ctx.arc(position.left, position.top, snakeThickness/2, 0, 2*Math.PI, false);
 				ctx.fill();
 			}
 			else {
@@ -500,15 +498,15 @@ function SnakeJS(parentElement, config){
 			drawEye(snake, snake.direction);
 		};
 
-		this.drawCandy = function(point, color){
+		this.drawCandy = function(candy){
 
-			ctx.fillStyle = color || "white";
+			ctx.fillStyle = candy.color;
 
-			var position = getPointPivotPosition(point);
+			var position = getPointPivotPosition(candy.point);
 
 			ctx.beginPath();
-			//ctx.moveTo(position.left, position.top);
-			ctx.arc(position.left, position.top, config.pointSize / 3, 0, Math.PI*2, true);
+
+			ctx.arc(position.left, position.top, length(candy.size), 0, Math.PI*2, false);
 			ctx.fill();
 		};
 
@@ -581,7 +579,7 @@ function SnakeJS(parentElement, config){
 				ctx.beginPath();
 				ctx.fillStyle = "#fff";
 				// Draw the circle
-				ctx.arc(headPosition.left, headPosition.top, length(0.125), 0, Math.PI*2, true);
+				ctx.arc(headPosition.left, headPosition.top, length(0.125), 0, Math.PI*2, false);
 				// And fill it
 				ctx.fill();
 			}
@@ -605,6 +603,7 @@ function SnakeJS(parentElement, config){
 
 		var getPointPivotPosition = function(point) {
 			var position = {
+					// @todo change to length() function
 					left : point.left * config.pointSize + config.pointSize / 2,
 					top : point.top * config.pointSize + config.pointSize / 2
 			};
@@ -683,6 +682,34 @@ function SnakeJS(parentElement, config){
 		};
 	}
 
+	/**
+	 * CANDY OBJECT
+	 * 
+	 * @param point The point object which determines the position of the candy
+	 * @param score Increment in score when eaten by snake
+	 * @param fatness How much fatness the snake gains if it eats this candy
+	 * @param size This number determines radius of the candy, relative to config.pointSize (value 1.0).
+	 * @param color The color of the candy
+	 */
+	function Candy(point, type){
+		this.point = point;
+
+		switch (type) {
+		case constants.CANDY_REGULAR:
+			this.score = 5;
+			this.fatness = 3;
+			this.size = 0.3;
+			this.color = config.candyColor;
+			break;
+		case constants.CANDY_MASSIVE:
+			this.score = 10;
+			this.fatness = 5;
+			this.size = 0.5;
+			this.color = config.candyColor;
+			break;
+		}
+	};
+	
 	/**
 	 * UTILITIES OBJECT
 	 *
