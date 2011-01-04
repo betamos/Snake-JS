@@ -80,7 +80,7 @@ function SnakeJS(parentElement, config){
 			inputInterface,			// Responsible for handling input from the user
 			grid,					// The grid object
 			currentState,			// Possible values are found in constants.STATE_*
-			frameIntervalId,			// The ID of the interval timer @todo change name
+			frameIntervalId,		// The ID of the interval timer
 			score,					// Player score
 			highScore,				// Player highscore
 			collisionFramesLeft;	// If the snake collides, how many frames are left until death
@@ -140,7 +140,7 @@ function SnakeJS(parentElement, config){
 				else
 					setTimeout(resurrect, config.frameInterval * 10);
 			};
-			
+
 			var resurrect = function (){
 				score = 0;
 				snake.growthLeft = constants.INITIAL_SNAKE_GROWTH_LEFT;
@@ -185,13 +185,7 @@ function SnakeJS(parentElement, config){
 
 			// If the snake hits a candy
 			if(candy.point.collidesWith(snake.points[0])) {
-				score += candy.calories;
-				highscore = Math.max(score, highscore);
-				snake.growthLeft += 3;
-				// Find a new position for the candy, and make sure it's not inside the snake
-				do {
-					candy = new Candy(randomPoint(grid), constants.CANDY_REGULAR);
-				} while(snake.collidesWith(candy.point));
+				eatCandy();
 			}
 
 			drawCurrentScene();
@@ -232,6 +226,23 @@ function SnakeJS(parentElement, config){
 				snake.points.pop();
 			
 			return true;
+		};
+
+		var eatCandy = function(){
+			score += candy.score;
+			highscore = Math.max(score, highscore);
+			snake.growthLeft += candy.calories;
+			// Find a new position for the candy, and make sure it's not inside the snake
+			do {
+				var newCandyPoint = randomPoint(grid);
+			} while(snake.collidesWith(newCandyPoint));
+			// Gives a float number between 0 and 1
+			var probabilitySeed = Math.random();
+			if (probabilitySeed < 0.75)
+				var newType = constants.CANDY_REGULAR;
+			else
+				var newType = constants.CANDY_MASSIVE;
+			candy = new Candy(newCandyPoint, newType);
 		};
 
 		// Get the direction which the snake will go this frame
@@ -402,9 +413,9 @@ function SnakeJS(parentElement, config){
 			this.color = config.candyColor;
 			break;
 		case constants.CANDY_MASSIVE:
-			this.score = 10;
+			this.score = 15;
 			this.calories = 5;
-			this.size = 0.5;
+			this.size = 0.45;
 			this.color = config.candyColor;
 			break;
 		}
