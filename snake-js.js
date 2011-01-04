@@ -27,7 +27,7 @@ function SnakeJS(parentElement, config){
 		snakeEyeColor : "white",		// Color of the snake's eye
 		candyColor : "#b11c1c",			// Color of the candy
 		scoreBoardColor : "#c6bc69",	// Color of the score board
-		scoreTextColor : "#4b4312",		// Color of score numbers on the score board
+		scoreTextColor : "#4b4312",		// Color of the score numbers on the score board
 		collisionTolerance : 1			// How many frames will the user get to change direction upon collision
 	};
 
@@ -80,7 +80,7 @@ function SnakeJS(parentElement, config){
 			inputInterface,			// Responsible for handling input from the user
 			grid,					// The grid object
 			currentState,			// Possible values are found in constants.STATE_*
-			mainIntervalId,			// The ID of the interval timer
+			mainIntervalId,			// The ID of the interval timer @todo change name
 			score,					// Player score
 			highScore,				// Player highscore
 			collisionFramesLeft;	// If the snake collides, how many frames are left until death
@@ -323,84 +323,6 @@ function SnakeJS(parentElement, config){
 	}
 
 	/**
-	 * INPUTINTERFACE OBJECT
-	 * 
-	 * Takes input from the user, typically key strokes to steer the snake but also window events
-	 * 
-	 * @param pauseFn A callback function to be executed when the window is blurred
-	 * @param resumeFn A callback function which executes when the window is in focus again
-	 * @param autoPlayFn A callback function which executes when any arrow key is pressed
-	 */
-	function InputInterface(pauseFn, resumeFn, autoPlayFn){
-
-		var arrowKeys = [37, 38, 39, 40],	// Key codes for the arrow keys on a keyboard
-			listening = false,				// Listening right now for key strokes etc?
-			lastDirection = null;			// Corresponds to the last arrow key pressed
-
-		/**
-		 * Public methods below
-		 */
-
-		this.lastDirection = function(){
-			return lastDirection;
-		};
-
-		// Start listening for player events
-		this.startListening = function(){
-			if (!listening) {
-				window.addEventListener("keydown", handleKeyPress, true);
-				window.addEventListener("blur", pauseFn, true);
-				window.addEventListener("focus", resumeFn, true);
-				listening = true;
-			}
-		};
-
-		// Stop listening for events. Typically called at game end
-		this.stopListening = function(){
-			if (listening) {
-				window.removeEventListener("keydown", handleKeyPress, true);
-				window.removeEventListener("blur", pauseFn, true);
-				window.removeEventListener("focus", resumeFn, true);
-				listening = false;
-			}
-		};
-
-		/**
-		 * Private methods below
-		 */
-
-		var handleKeyPress = function(event){
-			// If the key pressed is an arrow key
-			if (arrowKeys.indexOf(event.keyCode) >= 0) {
-				handleArrowKeyPress(event);
-			}
-		};
-
-		var handleArrowKeyPress = function(event){
-			with (constants) {
-				switch (event.keyCode) {
-				case 37:
-					lastDirection = DIRECTION_LEFT;
-					break;
-				case 38:
-					lastDirection = DIRECTION_UP;
-					break;
-				case 39:
-					lastDirection = DIRECTION_RIGHT;
-					break;
-				case 40:
-					lastDirection = DIRECTION_DOWN;
-					break;
-				}
-			}
-			// Arrow keys usually makes the browser window scroll. Prevent this evil behavior
-			event.preventDefault();
-			// Call the auto play function
-			autoPlayFn();
-		};
-	}
-
-	/**
 	 * GRID OBJECT
 	 *
 	 * This object holds the properties of the grid.
@@ -408,6 +330,129 @@ function SnakeJS(parentElement, config){
 	function Grid(width, height) {
 		this.width = width;
 		this.height = height;
+	}
+
+	/**
+	 * SNAKE OBJECT
+	 *
+	 * The snake itself...
+	 */
+	function Snake() {
+		this.direction = constants.DEFAULT_DIRECTION;
+		this.points = [];
+		this.fatness = 0;
+		this.alive = true;
+
+		// Check if any of this objects points collides with an external point
+		// Returns true if any collision occurs, false otherwise
+		this.collidesWith = function(point){
+			for (i in this.points) {
+				if (point.collidesWith(this.points[i]))
+					return true;
+			}
+			return false;
+		};
+	}
+
+	/**
+	 * POINT OBJECT
+	 *
+	 * A point has a place in the grid and can be passed
+	 * to View for drawing.
+	 */
+	function Point(left, top) {
+		this.left = left;
+		this.top = top;
+
+		// Check if this point collides with another
+		this.collidesWith = function(otherPoint){
+			if (otherPoint.left == this.left && otherPoint.top == this.top)
+				return true;
+			else
+				return false;
+		};
+	}
+
+	/**
+	 * CANDY OBJECT
+	 * 
+	 * @param point The point object which determines the position of the candy
+	 * @param score Increment in score when eaten by snake
+	 * @param fatness How much fatness the snake gains if it eats this candy
+	 * @param size This number determines radius of the candy, relative to config.pointSize (value 1.0).
+	 * @param color The color of the candy
+	 */
+	function Candy(point, type){
+		this.point = point;
+
+		switch (type) {
+		case constants.CANDY_REGULAR:
+			this.score = 5;
+			this.fatness = 3;
+			this.size = 0.3;
+			this.color = config.candyColor;
+			break;
+		case constants.CANDY_MASSIVE:
+			this.score = 10;
+			this.fatness = 5;
+			this.size = 0.5;
+			this.color = config.candyColor;
+			break;
+		}
+	};
+	
+	/**
+	 * UTILITIES OBJECT
+	 *
+	 * Provides some utility methods which don't fit anywhere else.
+	 */
+	function Utilities() {
+
+		// Takes a number and returns the sign of it.
+		// E.g. -56 -> -1, 57 -> 1, 0 -> 0
+		this.sign = function(number){
+			if(number > 0)
+				return 1;
+			else if (number < 0)
+				return -1;
+			else if (number === 0)
+				return 0;
+			else
+				return undefined;
+		};
+
+		// Helper function to find if two directions are in opposite to each other
+		// Returns true if the directions are in opposite to each other, false otherwise
+		this.oppositeDirections = function(direction1, direction2){
+	
+			// @see Declaration of constants to understand.
+			// E.g. UP is defined as 1 while down is defined as -1
+			if (Math.abs(direction1) == Math.abs(direction2) &&
+					this.sign(direction1 * direction2) == -1) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		};
+
+		// Merge two flat objects and return the modified object.
+		this.mergeObjects = function mergeObjects(slave, master){
+			var merged = {};
+			for (key in slave) {
+				if (typeof master[key] === "undefined")
+					merged[key] = slave[key];
+				else
+					merged[key] = master[key];
+			}
+			return merged;
+		};
+
+		// Returns an integer between min and max, including both min and max
+		this.randomInteger = function(min, max){
+			var randomNumber = min + Math.floor(Math.random() * (max + 1));
+			return randomNumber;
+		};
 	}
 
 	/**
@@ -640,125 +685,80 @@ function SnakeJS(parentElement, config){
 	}
 
 	/**
-	 * SNAKE OBJECT
-	 *
-	 * The snake itself...
-	 */
-	function Snake() {
-		this.direction = constants.DEFAULT_DIRECTION;
-		this.points = [];
-		this.fatness = 0;
-		this.alive = true;
-
-		// Check if any of this objects points collides with an external point
-		// Returns true if any collision occurs, false otherwise
-		this.collidesWith = function(point){
-			for (i in this.points) {
-				if (point.collidesWith(this.points[i]))
-					return true;
-			}
-			return false;
-		};
-	}
-
-	/**
-	 * POINT OBJECT
-	 *
-	 * A point has a place in the grid and can be passed
-	 * to View for drawing.
-	 */
-	function Point(left, top) {
-		this.left = left;
-		this.top = top;
-
-		// Check if this point collides with another
-		this.collidesWith = function(otherPoint){
-			if (otherPoint.left == this.left && otherPoint.top == this.top)
-				return true;
-			else
-				return false;
-		};
-	}
-
-	/**
-	 * CANDY OBJECT
+	 * INPUTINTERFACE OBJECT
 	 * 
-	 * @param point The point object which determines the position of the candy
-	 * @param score Increment in score when eaten by snake
-	 * @param fatness How much fatness the snake gains if it eats this candy
-	 * @param size This number determines radius of the candy, relative to config.pointSize (value 1.0).
-	 * @param color The color of the candy
+	 * Takes input from the user, typically key strokes to steer the snake but also window events
+	 * 
+	 * @param pauseFn A callback function to be executed when the window is blurred
+	 * @param resumeFn A callback function which executes when the window is in focus again
+	 * @param autoPlayFn A callback function which executes when any arrow key is pressed
 	 */
-	function Candy(point, type){
-		this.point = point;
+	function InputInterface(pauseFn, resumeFn, autoPlayFn){
 
-		switch (type) {
-		case constants.CANDY_REGULAR:
-			this.score = 5;
-			this.fatness = 3;
-			this.size = 0.3;
-			this.color = config.candyColor;
-			break;
-		case constants.CANDY_MASSIVE:
-			this.score = 10;
-			this.fatness = 5;
-			this.size = 0.5;
-			this.color = config.candyColor;
-			break;
-		}
-	};
-	
-	/**
-	 * UTILITIES OBJECT
-	 *
-	 * Provides some utility methods which don't fit anywhere else.
-	 */
-	function Utilities() {
+		var arrowKeys = [37, 38, 39, 40],	// Key codes for the arrow keys on a keyboard
+			listening = false,				// Listening right now for key strokes etc?
+			lastDirection = null;			// Corresponds to the last arrow key pressed
 
-		// Takes a number and returns the sign of it.
-		// E.g. -56 -> -1, 57 -> 1, 0 -> 0
-		this.sign = function(number){
-			if(number > 0)
-				return 1;
-			else if (number < 0)
-				return -1;
-			else if (number === 0)
-				return 0;
-			else
-				return undefined;
+		/**
+		 * Public methods below
+		 */
+
+		this.lastDirection = function(){
+			return lastDirection;
 		};
 
-		// Helper function to find if two directions are in opposite to each other
-		// Returns true if the directions are in opposite to each other, false otherwise
-		this.oppositeDirections = function(direction1, direction2){
-	
-			// @see Declaration of constants to understand.
-			// E.g. UP is defined as 1 while down is defined as -1
-			if (Math.abs(direction1) == Math.abs(direction2) &&
-					this.sign(direction1 * direction2) == -1) {
-				return true;
-			}
-			else {
-				return false;
+		// Start listening for player events
+		this.startListening = function(){
+			if (!listening) {
+				window.addEventListener("keydown", handleKeyPress, true);
+				window.addEventListener("blur", pauseFn, true);
+				window.addEventListener("focus", resumeFn, true);
+				listening = true;
 			}
 		};
 
-		// Merge two flat objects and return the modified object.
-		this.mergeObjects = function mergeObjects(slave, master){
-			var merged = {};
-			for (key in slave) {
-				if (typeof master[key] === "undefined")
-					merged[key] = slave[key];
-				else
-					merged[key] = master[key];
+		// Stop listening for events. Typically called at game end
+		this.stopListening = function(){
+			if (listening) {
+				window.removeEventListener("keydown", handleKeyPress, true);
+				window.removeEventListener("blur", pauseFn, true);
+				window.removeEventListener("focus", resumeFn, true);
+				listening = false;
 			}
-			return merged;
 		};
 
-		// Returns an integer between min and max, including both min and max
-		this.randomInteger = function(min, max){
-			var randomNumber = min + Math.floor(Math.random() * (max + 1));
-			return randomNumber;
+		/**
+		 * Private methods below
+		 */
+
+		var handleKeyPress = function(event){
+			// If the key pressed is an arrow key
+			if (arrowKeys.indexOf(event.keyCode) >= 0) {
+				handleArrowKeyPress(event);
+			}
+		};
+
+		var handleArrowKeyPress = function(event){
+			with (constants) {
+				switch (event.keyCode) {
+				case 37:
+					lastDirection = DIRECTION_LEFT;
+					break;
+				case 38:
+					lastDirection = DIRECTION_UP;
+					break;
+				case 39:
+					lastDirection = DIRECTION_RIGHT;
+					break;
+				case 40:
+					lastDirection = DIRECTION_DOWN;
+					break;
+				}
+			}
+			// Arrow keys usually makes the browser window scroll. Prevent this evil behavior
+			event.preventDefault();
+			// Call the auto play function
+			autoPlayFn();
 		};
 	}
 
