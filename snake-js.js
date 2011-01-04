@@ -17,18 +17,19 @@ function SnakeJS(parentElement, config){
 	var utilities = new Utilities();
 
 	var defaultConfig = {
-		autoInit : true,				// Game inits automagically. If false, one must call .init() manually
-		gridWidth : 30,					// Width of the game grid
-		gridHeight : 20,				// Height of the game grid
-		frameInterval : 150,			// Milliseconds between frames (@todo change to speed?)
-		pointSize : 16,					// Size of one grid point (the snake is almost one grid point thick)
-		backgroundColor : "#f3e698",	// Color of the background. CSS3 color values
-		snakeColor : "#4b4312",			// Color of the snake
-		snakeEyeColor : "white",		// Color of the snake's eye
-		candyColor : "#b11c1c",			// Color of the candy
-		scoreBoardColor : "#c6bc69",	// Color of the score board
-		scoreTextColor : "#4b4312",		// Color of the score numbers on the score board
-		collisionTolerance : 1			// How many frames will the user get to change direction upon collision
+		autoInit : true,					// Game inits automagically
+		gridWidth : 30,						// Width of the game grid
+		gridHeight : 20,					// Height of the game grid
+		frameInterval : 150,				// Milliseconds between frames (@todo change to speed?)
+		pointSize : 16,						// Size of one grid point
+		backgroundColor : "#f3e698",		// Color of the background. CSS3 color values
+		snakeColor : "#4b4312",				// Color of the snake
+		snakeEyeColor : "white",			// Color of the snake's eye
+		candyColor : "#b11c1c",				// Color of the candy
+		shrinkingCandyColor : "#199C2C",	// Color of the special candy that shrinks
+		scoreBoardColor : "#c6bc69",		// Color of the score board
+		scoreTextColor : "#4b4312",			// Color of the score numbers on the score board
+		collisionTolerance : 1				// Still frames before collision. More = easier
 	};
 
 	// Merge user config with default config
@@ -47,7 +48,8 @@ function SnakeJS(parentElement, config){
 		INITIAL_SNAKE_GROWTH_LEFT : 6,
 		SCOREBOARD_HEIGHT : 20,
 		CANDY_REGULAR : 1,
-		CANDY_MASSIVE : 2
+		CANDY_MASSIVE : 2,
+		CANDY_SHRINKING : 3
 	};
 
 	var engine = new Engine(parentElement);
@@ -99,7 +101,7 @@ function SnakeJS(parentElement, config){
 			snake.points.push(randomPoint(grid));
 			snake.growthLeft = constants.INITIAL_SNAKE_GROWTH_LEFT;
 
-			candy = new Candy(randomPoint(grid), constants.CANDY_REGULAR);
+			candy = randomCandy();
 
 			view.initPlayField();
 			drawCurrentScene();
@@ -183,9 +185,14 @@ function SnakeJS(parentElement, config){
 			else
 				collisionFramesLeft = config.collisionTolerance;
 
+			if (!candy.age())
+					// The candy disappeared by ageing
+					candy = randomCandy();
+
 			// If the snake hits a candy
 			if(candy.point.collidesWith(snake.points[0])) {
 				eatCandy();
+				candy = randomCandy();
 			}
 
 			drawCurrentScene();
@@ -232,6 +239,9 @@ function SnakeJS(parentElement, config){
 			score += candy.score;
 			highscore = Math.max(score, highscore);
 			snake.growthLeft += candy.calories;
+		};
+
+		var randomCandy = function() {
 			// Find a new position for the candy, and make sure it's not inside the snake
 			do {
 				var newCandyPoint = randomPoint(grid);
@@ -240,9 +250,11 @@ function SnakeJS(parentElement, config){
 			var probabilitySeed = Math.random();
 			if (probabilitySeed < 0.75)
 				var newType = constants.CANDY_REGULAR;
-			else
+			else if (probabilitySeed < 0.95)
 				var newType = constants.CANDY_MASSIVE;
-			candy = new Candy(newCandyPoint, newType);
+			else
+				var newType = constants.CANDY_SHRINKING;
+			return new Candy(newCandyPoint, newType);
 		};
 
 		// Get the direction which the snake will go this frame
@@ -400,25 +412,50 @@ function SnakeJS(parentElement, config){
 	 */
 	function Candy(point, type){
 		this.point = point,
+		this.type = type,
 		this.score,			// Increment in score when eaten by snake
 		this.calories,		// How much growth the snake gains if it eats this candy
-		this.size,			// Radius of the candy, relative to config.pointSize
-		this.color;			// Color of the candy
+		this.radius,		// Radius of the candy, relative to config.pointSize
+		this.color,			// Color of the candy
+		this.decrement,		// If greater than 0, the radius of the candy will shrink...
+		this.minRadius;		// until it reaches this minimum value. Then it will disappear
 
 		switch (type) {
 		case constants.CANDY_REGULAR:
 			this.score = 5;
 			this.calories = 3;
-			this.size = 0.3;
+			this.radius = 0.3;
 			this.color = config.candyColor;
 			break;
 		case constants.CANDY_MASSIVE:
 			this.score = 15;
 			this.calories = 5;
-			this.size = 0.45;
+			this.radius = 0.45;
 			this.color = config.candyColor;
 			break;
+		case constants.CANDY_SHRINKING:
+			this.score = 50;
+			this.calories = 0;
+			this.radius = 0.45;
+			this.color = config.shrinkingCandyColor;
+			this.decrement = 0.008;
+			this.minRadius = 0.05;
+			break;
 		}
+
+		// Shrinks a CANDY_SHRINKING candy. Returns false if candy is below minRadius
+		this.age = function(){
+			// Currently only CANDY_SHRINKING reacts to ageing
+			if (this.type === constants.CANDY_SHRINKING) {
+				this.radius -= this.decrement;
+				if (this.radius < this.minRadius)
+					return false;
+				else
+					return true;
+			}
+			else
+				return true;
+		};
 	};
 	
 	/**
@@ -570,7 +607,7 @@ function SnakeJS(parentElement, config){
 
 			ctx.beginPath();
 
-			ctx.arc(position.left, position.top, length(candy.size), 0, Math.PI*2, false);
+			ctx.arc(position.left, position.top, length(candy.radius), 0, Math.PI*2, false);
 			ctx.fill();
 		};
 
