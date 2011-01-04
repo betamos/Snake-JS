@@ -24,7 +24,8 @@ function SnakeJS(parentElement, config){
 		pointSize : 16,					// Size of one grid point (the snake is almost one grid point thick)
 		backgroundColor : "#f3e698",	// The color of the background. CSS3 color values
 		snakeColor : "#4b4312",			// The color of the snake
-		candyColor : "#b11c1c"			// The color of the candy
+		candyColor : "#b11c1c",			// The color of the candy
+		collisionTolerance : 1			// How many frames will the user get to change direction upon collision
 	};
 
 	// Merge user config with default config
@@ -70,15 +71,16 @@ function SnakeJS(parentElement, config){
 	 */
 	function Engine(parentElement) {
 		
-		var snake,				// The snake itself
-			candy,				// The candy which the snake eats
-			view,				// The view object which draws the points to screen
-			inputInterface,		// Responsible for handling input from the user
-			grid,				// The grid object
-			currentState,		// Possible values are found in constants.STATE_*
-			mainIntervalId,		// The ID of the interval timer
-			score,				// Player score
-			highScore;			// Player highscore
+		var snake,					// The snake itself
+			candy,					// The candy which the snake eats
+			view,					// The view object which draws the points to screen
+			inputInterface,			// Responsible for handling input from the user
+			grid,					// The grid object
+			currentState,			// Possible values are found in constants.STATE_*
+			mainIntervalId,			// The ID of the interval timer
+			score,					// Player score
+			highScore,				// Player highscore
+			collisionFramesLeft;	// If the snake collides, how many frames are left until death
 
 		this.initGame = function(){
 
@@ -157,15 +159,26 @@ function SnakeJS(parentElement, config){
 		// Calculates what the next frame will be like and draws it.
 		var nextFrame = function(){
 
-			// Try to move the snake in the desired direction
+			// If the snake can't be moved in the desired direction due to collision
 			if (!moveSnake(inputInterface.lastDirection())) {
-				// @todo Give the player one frame extra time to move away
-				snake.alive = false;
-				// Draw the dead snake
-				drawCurrentScene();
-				gameOver();
-				return false;
+				if (collisionFramesLeft > 0) {
+					// Survives for a little longer
+					collisionFramesLeft--;
+					return;
+				}
+				else {
+					// Now it's dead
+					snake.alive = false;
+					// Draw the dead snake
+					drawCurrentScene();
+					// And play game over scene
+					gameOver();
+					return;
+				}
 			}
+			// It can move.
+			else
+				collisionFramesLeft = config.collisionTolerance;
 
 			// If the snake hits a candy
 			if(candy.point.collidesWith(snake.points[0])) {
@@ -179,8 +192,6 @@ function SnakeJS(parentElement, config){
 			}
 
 			drawCurrentScene();
-
-			return true;
 		};
 
 		var drawCurrentScene = function() {
@@ -197,9 +208,9 @@ function SnakeJS(parentElement, config){
 			var head = snake.points[0];
 
 			// The direction the snake will move in this frame
-			snake.direction = actualDirection(desiredDirection || constants.DEFAULT_DIRECTION);
+			var newDirection = actualDirection(desiredDirection || constants.DEFAULT_DIRECTION);
 
-			var newHead = movePoint(head, snake.direction);
+			var newHead = movePoint(head, newDirection);
 
 			if (!insideGrid(newHead, grid))
 				shiftPointIntoGrid(newHead, grid);
@@ -209,6 +220,7 @@ function SnakeJS(parentElement, config){
 				return false;
 			}
 
+			snake.direction = newDirection;
 			snake.points.unshift(newHead);
 
 			if (snake.fatness >= 1)
@@ -603,9 +615,8 @@ function SnakeJS(parentElement, config){
 
 		var getPointPivotPosition = function(point) {
 			var position = {
-					// @todo change to length() function
-					left : point.left * config.pointSize + config.pointSize / 2,
-					top : point.top * config.pointSize + config.pointSize / 2
+					left : point.left * length(1) + length(.5),
+					top : point.top * length(1) + length(.5)
 			};
 			return position;
 		};
