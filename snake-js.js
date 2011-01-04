@@ -44,7 +44,7 @@ function SnakeJS(parentElement, config){
 		STATE_PAUSED : 2,
 		STATE_PLAYING : 3,
 		STATE_GAME_OVER : 4,
-		INITIAL_SNAKE_FATNESS : 6,
+		INITIAL_SNAKE_GROWTH_LEFT : 6,
 		SCOREBOARD_HEIGHT : 20,
 		CANDY_REGULAR : 1,
 		CANDY_MASSIVE : 2
@@ -80,7 +80,7 @@ function SnakeJS(parentElement, config){
 			inputInterface,			// Responsible for handling input from the user
 			grid,					// The grid object
 			currentState,			// Possible values are found in constants.STATE_*
-			mainIntervalId,			// The ID of the interval timer @todo change name
+			frameIntervalId,			// The ID of the interval timer @todo change name
 			score,					// Player score
 			highScore,				// Player highscore
 			collisionFramesLeft;	// If the snake collides, how many frames are left until death
@@ -97,7 +97,7 @@ function SnakeJS(parentElement, config){
 
 			// Create snake body
 			snake.points.push(randomPoint(grid));
-			snake.fatness = constants.INITIAL_SNAKE_FATNESS;
+			snake.growthLeft = constants.INITIAL_SNAKE_GROWTH_LEFT;
 
 			candy = new Candy(randomPoint(grid), constants.CANDY_REGULAR);
 
@@ -109,14 +109,14 @@ function SnakeJS(parentElement, config){
 
 		this.pauseGame = function(){
 			if (currentState === constants.STATE_PLAYING) {
-				clearInterval(mainIntervalId);
+				clearInterval(frameIntervalId);
 				currentState = constants.STATE_PAUSED;
 			}
 		};
 
 		this.resumeGame = function(){
 			if (currentState === constants.STATE_PAUSED) {
-				mainIntervalId = setInterval(nextFrame, config.frameInterval);
+				frameIntervalId = setInterval(nextFrame, config.frameInterval);
 				currentState = constants.STATE_PLAYING;
 			}
 		};
@@ -128,7 +128,7 @@ function SnakeJS(parentElement, config){
 		// Play a game over scene and restart the game
 		var gameOver = function(){
 			currentState = constants.STATE_GAME_OVER;
-			clearInterval(mainIntervalId);
+			clearInterval(frameIntervalId);
 
 			// Remove one point from the snakes tail and recurse with a timeout
 			var removeTail = function(){
@@ -143,7 +143,7 @@ function SnakeJS(parentElement, config){
 			
 			var resurrect = function (){
 				score = 0;
-				snake.fatness = constants.INITIAL_SNAKE_FATNESS;
+				snake.growthLeft = constants.INITIAL_SNAKE_GROWTH_LEFT;
 				snake.alive = true;
 				drawCurrentScene();
 				currentState = constants.STATE_READY;
@@ -154,7 +154,7 @@ function SnakeJS(parentElement, config){
 
 		var startMoving = function(){
 			if (currentState === constants.STATE_READY) {
-				mainIntervalId = setInterval(nextFrame, config.frameInterval);
+				frameIntervalId = setInterval(nextFrame, config.frameInterval);
 				currentState = constants.STATE_PLAYING;
 			}
 		};
@@ -185,9 +185,9 @@ function SnakeJS(parentElement, config){
 
 			// If the snake hits a candy
 			if(candy.point.collidesWith(snake.points[0])) {
-				score += candy.fatness;
+				score += candy.calories;
 				highscore = Math.max(score, highscore);
-				snake.fatness += 3;
+				snake.growthLeft += 3;
 				// Find a new position for the candy, and make sure it's not inside the snake
 				do {
 					candy = new Candy(randomPoint(grid), constants.CANDY_REGULAR);
@@ -226,8 +226,8 @@ function SnakeJS(parentElement, config){
 			snake.direction = newDirection;
 			snake.points.unshift(newHead);
 
-			if (snake.fatness >= 1)
-				snake.fatness--;
+			if (snake.growthLeft >= 1)
+				snake.growthLeft--;
 			else
 				snake.points.pop();
 			
@@ -340,7 +340,7 @@ function SnakeJS(parentElement, config){
 	function Snake() {
 		this.direction = constants.DEFAULT_DIRECTION;
 		this.points = [];
-		this.fatness = 0;
+		this.growthLeft = 0;
 		this.alive = true;
 
 		// Check if any of this objects points collides with an external point
@@ -377,24 +377,25 @@ function SnakeJS(parentElement, config){
 	 * CANDY OBJECT
 	 * 
 	 * @param point The point object which determines the position of the candy
-	 * @param score Increment in score when eaten by snake
-	 * @param fatness How much fatness the snake gains if it eats this candy
-	 * @param size This number determines radius of the candy, relative to config.pointSize (value 1.0).
-	 * @param color The color of the candy
+	 * @param type Any type defined in constants.CANDY_*
 	 */
 	function Candy(point, type){
-		this.point = point;
+		this.point = point,
+		this.score,			// Increment in score when eaten by snake
+		this.calories,		// How much growth the snake gains if it eats this candy
+		this.size,			// Radius of the candy, relative to config.pointSize
+		this.color;			// Color of the candy
 
 		switch (type) {
 		case constants.CANDY_REGULAR:
 			this.score = 5;
-			this.fatness = 3;
+			this.calories = 3;
 			this.size = 0.3;
 			this.color = config.candyColor;
 			break;
 		case constants.CANDY_MASSIVE:
 			this.score = 10;
-			this.fatness = 5;
+			this.calories = 5;
 			this.size = 0.5;
 			this.color = config.candyColor;
 			break;
