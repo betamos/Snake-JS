@@ -69,6 +69,10 @@ function SnakeJS(parentElement, config){
 		engine.resume();
 	};
 
+	this.getHighScore = function(){
+		return engine.getHighScore();
+	};
+
 	/**
 	 * GAME MODEL OBJECT
 	 *
@@ -84,7 +88,7 @@ function SnakeJS(parentElement, config){
 			currentState,			// Possible values are found in constants.STATE_*
 			frameIntervalId,		// The ID of the interval timer
 			score,					// Player score
-			highScore,				// Player highscore
+			highScore,				// Player highScore
 			collisionFramesLeft;	// If the snake collides, how many frames are left until death
 
 		this.initGame = function(){
@@ -95,7 +99,7 @@ function SnakeJS(parentElement, config){
 			snake = new Snake();
 			grid = new Grid(config.gridWidth, config.gridHeight);
 			score = 0;
-			highscore = score;
+			highScore = score;
 
 			// Create snake body
 			snake.points.push(randomPoint(grid));
@@ -121,6 +125,10 @@ function SnakeJS(parentElement, config){
 				frameIntervalId = setInterval(nextFrame, config.frameInterval);
 				currentState = constants.STATE_PLAYING;
 			}
+		};
+
+		this.getHighScore = function(){
+			return highScore;
 		};
 
 		/**
@@ -204,7 +212,7 @@ function SnakeJS(parentElement, config){
 			// Draw the objects to the screen
 			view.drawSnake(snake, config.snakeColor);
 			view.drawCandy(candy);
-			view.drawScore(score, highscore);
+			view.drawScore(score, highScore);
 		};
 
 		// Move the snake. Automatically handles self collision and walking through walls
@@ -237,7 +245,7 @@ function SnakeJS(parentElement, config){
 
 		var eatCandy = function(){
 			score += candy.score;
-			highscore = Math.max(score, highscore);
+			highScore = Math.max(score, highScore);
 			snake.growthLeft += candy.calories;
 		};
 
@@ -618,7 +626,7 @@ function SnakeJS(parentElement, config){
 					config.gridHeight * config.pointSize);
 		};
 
-		this.drawScore = function(score, highscore){
+		this.drawScore = function(score, highScore){
 			// Translate to 0, 0 to draw from origo
 			ctx.translate(0, -1 * constants.SCOREBOARD_HEIGHT);
 
@@ -639,7 +647,7 @@ function SnakeJS(parentElement, config){
 
 			// Draw high score to the upper left corner
 			ctx.textAlign = "left";
-			ctx.fillText(highscore, horizontalMargin, constants.SCOREBOARD_HEIGHT - bottomMargin);
+			ctx.fillText(highScore, horizontalMargin, constants.SCOREBOARD_HEIGHT - bottomMargin);
 
 			// Translate back
 			ctx.translate(0, constants.SCOREBOARD_HEIGHT);
