@@ -22,12 +22,12 @@ function SnakeJS(parentElement, config){
 		gridHeight : 20,					// Height of the game grid
 		frameInterval : 150,				// Milliseconds between frames (@todo change to speed?)
 		pointSize : 16,						// Size of one grid point
-		backgroundColor : "#f3e698",		// Color of the background. CSS3 color values
+		backgroundColor : "white",			// Color of the background. CSS3 color values
 		snakeColor : "#4b4312",				// Color of the snake
 		snakeEyeColor : "white",			// Color of the snake's eye
 		candyColor : "#b11c1c",				// Color of the candy
 		shrinkingCandyColor : "#199C2C",	// Color of the special candy that shrinks
-		scoreBoardColor : "#c6bc69",		// Color of the score board
+		scoreBoardColor : "#c0c96b",		// Color of the score board
 		scoreTextColor : "#4b4312",			// Color of the score numbers on the score board
 		collisionTolerance : 1				// Still frames before collision. More = easier
 	};
@@ -775,7 +775,8 @@ function SnakeJS(parentElement, config){
 		// Start listening for player events
 		this.startListening = function(){
 			if (!listening) {
-				window.addEventListener("keydown", handleKeyPress, true);
+				window.addEventListener("keydown", handleKeyDown, true);
+				window.addEventListener("keypress", disableKeyPress, true);
 				window.addEventListener("blur", pauseFn, true);
 				window.addEventListener("focus", resumeFn, true);
 				listening = true;
@@ -785,7 +786,8 @@ function SnakeJS(parentElement, config){
 		// Stop listening for events. Typically called at game end
 		this.stopListening = function(){
 			if (listening) {
-				window.removeEventListener("keydown", handleKeyPress, true);
+				window.removeEventListener("keydown", handleKeyDown, true);
+				window.removeEventListener("keypress", disableKeyPress, true);
 				window.removeEventListener("blur", pauseFn, true);
 				window.removeEventListener("focus", resumeFn, true);
 				listening = false;
@@ -796,10 +798,17 @@ function SnakeJS(parentElement, config){
 		 * Private methods below
 		 */
 
-		var handleKeyPress = function(event){
+		var handleKeyDown = function(event){
 			// If the key pressed is an arrow key
 			if (arrowKeys.indexOf(event.keyCode) >= 0) {
 				handleArrowKeyPress(event);
+			}
+		};
+
+		var disableKeyPress = function(event){
+			// If the key pressed is an arrow key
+			if (arrowKeys.indexOf(event.keyCode) >= 0) {
+				event.preventDefault();
 			}
 		};
 
