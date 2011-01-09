@@ -2,6 +2,10 @@ Snake JS
 ========
 Snake JS is a **one player simple 2D-game** written *purely in JavaScript* (without any frameworks). It is playable in modern web browsers. It is inspired by [the classical video game Snake][1] which could be played on some Nokia cell phones from the 90's. It uses the HTML5 canvas element for rendering.
 
+Demo
+----
+Play the game on my [personal website][4]. There is also a highscore feature there.
+
 Instructions
 ------------
 To play the game, just open **&lt;examples/snake-js-example.html&gt;** in your favourite modern gecko- or webkit-based web browser like Firefox, Safari or Chrome.
@@ -44,6 +48,8 @@ This purpose of Snake JS is (in this order)
 
 The purpose is **not** to make the game cross-browser compatible. Hacks and inconsistensies are only applied when absolutely necessary.
 
+Currently Snake JS **does not work on Internet Explorer**. This is because IE is a **non-standards compliant browser** which does not support things like <code>DOMObject.addEventListener()</code>. IE is like a spoiled child, and I refuse to treat it differently. Partly because I don't want to bloat the code or use extrenal libraries and partly because I just don't feel for it.
+
 Author and License
 -----------
 Originally Snake JS is written by [Didrik Nordström][2]. It is MIT licensed. Make sure to [follow the project on github][3].
@@ -51,3 +57,4 @@ Originally Snake JS is written by [Didrik Nordström][2]. It is MIT licensed. Ma
 [1]: http://en.wikipedia.org/wiki/Snake_(video_game)
 [2]: http://betamos.se/
 [3]: http://github.com/betamos/Snake-JS
+[4]: http://betamos.se/bloggen/spela-snake-med-html5
