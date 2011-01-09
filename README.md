@@ -8,7 +8,7 @@ Play the game on my [personal website][4]. There is also a highscore feature the
 
 Instructions
 ------------
-To play the game, just open **&lt;examples/snake-js-example.html&gt;** in your favourite modern gecko- or webkit-based web browser like Firefox, Safari or Chrome.
+To play the game, just open **&lt;example.html&gt;** in your favourite modern gecko- or webkit-based web browser like Firefox, Safari or Chrome.
 
 If you want to include the game on your own site, follow these steps:
 
@@ -33,7 +33,7 @@ Since you need access to the DOM-tree you may want to create an event triggered 
 
 In this function, first retrieve the **parent element** (this is where the game will be rendered) as a **DOM element**. Then create the `SnakeJS` object and pass the parent element to the constructor.
 
-Check the **example directory** for sample implementations of the game. It also contains some information about changing game settings and how to use Snake JS properly with jQuery.
+Check **&lt;example.html&gt;** for a sample implementation of the game. It also contains some information about changing game settings and how to use Snake JS properly with jQuery.
 
 Oh, and please put a link to the [github project][3] if you make it pulic.
 
